@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.1" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.1" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+
+  
+  <meta name="keywords" content="数据结构," />
+
+
+<meta name="description" content="简单介绍一下 SkipList 的原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SkipList 跳表">
+<meta property="og:url" content="http://blog.abandonzhang.me/2018/01/19/SkipList/index.html">
+<meta property="og:site_name" content="蝸牛">
+<meta property="og:description" content="简单介绍一下 SkipList 的原理。">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_1.png">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_2.png">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_3.png">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_4.png">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_5.png">
+<meta property="og:updated_time" content="2018-01-21T10:14:19.670Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SkipList 跳表">
+<meta name="twitter:description" content="简单介绍一下 SkipList 的原理。">
+<meta name="twitter:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_1.png">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="蝸牛" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://blog.abandonzhang.me/2018/01/19/SkipList/"/>
+
+
+  <title>SkipList 跳表 | 蝸牛</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蝸牛</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">小小的天有大大的夢想</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2018/01/19/SkipList/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="AbandonZHANG">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蝸牛">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">SkipList 跳表</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-19T17:32:16+08:00">Jan 19, 2018</time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>简单介绍一下 SkipList 的原理。</p>
+<a id="more"></a>
+<p>SkipList 是用来代替 Self-Balancing Binary Search Tree （如 AVL、红黑树等）的数据结构。它具有以下优势：</p>
+<ul>
+<li>理解、实现简单</li>
+<li>绝大多数情况下（概率）时空复杂度与 Self-Balancing Binary Search Tree 相当</li>
+<li>插入、删除操作简单，高并发环境下优势较大（Self-Balancing Binary Search Tree 基本都需要自旋）</li>
+<li>容易实现线程安全的版本</li>
+<li>范围查询效率高</li>
+</ul>
+<h2 id="应用范围"><a href="#应用范围" class="headerlink" title="应用范围"></a>应用范围</h2><ul>
+<li>Redis - 使用 SkipList 实现其 Sorted Set 数据结构</li>
+<li>LevelDB</li>
+<li>Lucene</li>
+<li>Jdk - ConcurrentSkipListMap, ConcurrentSkipListSet</li>
+</ul>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_1.png" alt=""></p>
+<ul>
+<li>图 a ：普通的 Linked List（level 0）。查询某个 key 的时间复杂度为 O(N)</li>
+<li>图 b ：在 level 0 List 的基础上新增一层 level 1 List（间隔部分元素），同时，同一位置的元素切换到另一个 level List 的时间复杂度为常数级别<br>（为了简化问题，暂定间隔是均匀分布的。图 b 的间隔即为 2，则时间复杂度为：|L1| + |L0|/|L1| = O(N/2) + 2）</li>
+<li>图 c / d ：在 level i List 的基础上新增一层 level i+1 List。间隔仍为 2。时间复杂度为：|Lk| + |Lk-1|/|Lk| + |Lk-2|/|Lk-1| + … + |L0|/|L1|<br>（间隔为 2 时，最多可以建 log2N 层的 level，即 k= log2N，Lk 一般是1个或2个元素，因此最后的时间复杂度为 2 * log2N = O(log2N)）</li>
+</ul>
+<p>理想很丰满，现实很骨感……</p>
+<p>维护一致间隔的成本很高，在插入和删除时均需要做大量调整，与 Self-Balancing Binary Search Tree 相比不一定更有优势了</p>
+<p>Skip List 的做法是：节点的最高 level 在插入时随机决定，此后不再发生变化</p>
+<p>具体的随机规则是：<br><figure class="highlight matlab"><table><tr><td class="code"><pre><span class="line">定义概率p：表示当节点有 level <span class="built_in">i</span> 时，同时会有 level <span class="built_in">i</span>+<span class="number">1</span> 的概率</span><br><span class="line">从 level <span class="number">0</span> 开始，类似抛硬币，每次独立地判断本次概率是否大于p，大于则 level+<span class="number">1</span></span><br></pre></td></tr></table></figure></p>
+<p>令 L(N) = max level，则可以证明 L(N) = $log_{1/p}N$。当 p = 1/2 时，L(N) = $log_2N$。</p>
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_2.png" alt=""></p>
+<p>其中绿色和蓝色的就是查找路径<br><figure class="highlight cos"><table><tr><td class="code"><pre><span class="line">Search(list, searchKey)</span><br><span class="line">    <span class="keyword">x</span> := list→header</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">for</span> i := list→level downto <span class="number">1</span> <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">while</span> <span class="keyword">x</span>→forward[i]→key &lt; searchKey <span class="keyword">do</span></span><br><span class="line">            <span class="keyword">x</span> := <span class="keyword">x</span>→forward[i]</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">x</span> := <span class="keyword">x</span>→forward[<span class="number">1</span>]</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">x</span>→key = searchKey then <span class="keyword">return</span> <span class="keyword">x</span>→value</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> failure</span><br></pre></td></tr></table></figure></p>
+<h3 id="插入"><a href="#插入" class="headerlink" title="插入"></a>插入</h3><p>插入和删除的情况较复杂一点点，因为涉及到临近节点的指针变化</p>
+<p><img src="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_3.png" alt=""></p>
+<p>我们需要记录下来搜索路径中每一个 level 的拐点元素，该元素可能在插入新节点后，该 level 下的 next 指针会发生变化（这里说可能，是因为新节点的 level 可能没有这么高，就不需要变化）</p>
+<p>插入的节点有两种可能：</p>
+<ul>
+<li>新节点 level 小于当前 List 最高 level，此时只需要遍历每一层 level，修复 next 指针即可</li>
+<li>新节点 level 高于当前 List 最高 level，此时需要把 head 节点也加入到 update[] 数组中，然后再去遍历每层 level，修复 next 指针</li>
+</ul>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">Insert</span>(<span class="keyword">list</span>, searchKey, newValue)</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">local</span> <span class="keyword">update</span>[<span class="number">1.</span>.MaxLevel]</span><br><span class="line"> </span><br><span class="line">    x := <span class="keyword">list</span>→header</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">for</span> i := <span class="keyword">list</span>→<span class="keyword">level</span> downto <span class="number">1</span> <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">while</span> x→forward[i]→<span class="keyword">key</span> &lt; searchKey <span class="keyword">do</span></span><br><span class="line">            x := x→forward[i]</span><br><span class="line">            <span class="keyword">update</span>[i] := x</span><br><span class="line">     </span><br><span class="line">    x := x→forward[<span class="number">1</span>]</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> x→<span class="keyword">key</span> = searchKey</span><br><span class="line">    <span class="keyword">then</span></span><br><span class="line">        // 节点已存在，直接覆盖原值</span><br><span class="line">        x→<span class="keyword">value</span> := newValue</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        // 节点不存在，插入</span><br><span class="line">        lvl := randomLevel()</span><br><span class="line"> </span><br><span class="line">        // 新节点 <span class="keyword">level</span> 高于当前最大 <span class="keyword">level</span>，补充 <span class="keyword">update</span> 数组</span><br><span class="line">        <span class="keyword">if</span> lvl &gt; <span class="keyword">list</span>→<span class="keyword">level</span> <span class="keyword">then</span></span><br><span class="line">            <span class="keyword">for</span> i := <span class="keyword">list</span>→<span class="keyword">level</span> + <span class="number">1</span> <span class="keyword">to</span> lvl <span class="keyword">do</span></span><br><span class="line">                <span class="keyword">update</span>[i] := <span class="keyword">list</span>→header</span><br><span class="line">            <span class="keyword">list</span>→<span class="keyword">level</span> := lvl</span><br><span class="line"> </span><br><span class="line">        x := makeNode(lvl, searchKey, <span class="keyword">value</span>)</span><br><span class="line"> </span><br><span class="line">        // 修复 <span class="keyword">next</span> 指针</span><br><span class="line">        <span class="keyword">for</span> i := <span class="number">1</span> <span class="keyword">to</span> <span class="keyword">level</span> <span class="keyword">do</span></span><br><span class="line">            x→forward[i] := <span class="keyword">update</span>[i]→forward[i]</span><br><span class="line">            <span class="keyword">update</span>[i]→forward[i] := x</span><br></pre></td></tr></table></figure>
+<h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_4.png" alt=""></p>
+<p>删除阶段和插入差不多，也需要记录下来搜索路径中的每一层 level 的拐点元素（注意这里我们不能在 level &gt; 1 的层级就找到这个元素结束流程，必须在 level = 1 这一层到达最终元素，以便记录搜索路径中的拐点元素）</p>
+<p>删除节点可能会造成 List 整体 level 的下降，因此在删除完节点，调整完 next 指针后还需要调整一下 head 节点的 level（直接指向 NIL 的 level 就可以去掉了）</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">Delete</span>(<span class="keyword">list</span>, searchKey)</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">local</span> <span class="keyword">update</span>[<span class="number">1.</span>.MaxLevel]</span><br><span class="line"> </span><br><span class="line">    x := <span class="keyword">list</span>→header</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">for</span> i := <span class="keyword">list</span>→<span class="keyword">level</span> downto <span class="number">1</span> <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">while</span> x→forward[i]→<span class="keyword">key</span> &lt; searchKey <span class="keyword">do</span></span><br><span class="line">            x := x→forward[i]</span><br><span class="line">        <span class="keyword">update</span>[i] := x</span><br><span class="line"> </span><br><span class="line">    x := x→forward[<span class="number">1</span>]</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">if</span> x→<span class="keyword">key</span> = searchKey <span class="keyword">then</span></span><br><span class="line">        <span class="keyword">for</span> i := <span class="number">1</span> <span class="keyword">to</span> <span class="keyword">list</span>→<span class="keyword">level</span> <span class="keyword">do</span></span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">update</span>[i]→forward[i] ≠ x <span class="keyword">then</span> break</span><br><span class="line">            <span class="keyword">update</span>[i]→forward[i] := x→forward[i]</span><br><span class="line">        free(x)</span><br><span class="line">        <span class="keyword">while</span> <span class="keyword">list</span>→<span class="keyword">level</span> &gt; <span class="number">1</span> <span class="keyword">and</span> <span class="keyword">list</span>→header→forward[<span class="keyword">list</span>→<span class="keyword">level</span>] = NIL <span class="keyword">do</span></span><br><span class="line">            <span class="keyword">list</span>→<span class="keyword">level</span> := <span class="keyword">list</span>→<span class="keyword">level</span> – <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<h3 id="退化"><a href="#退化" class="headerlink" title="退化"></a>退化</h3><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_5.png" alt=""></p>
+<p>这种情况下查询性能甚至不如普通链表，不过出现这种情况的几率并不大。</p>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><ol>
+<li>Skip Lists: A Probabilistic Alternative to Balanced Trees —— William Pugh </li>
+<li><a href="https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-046j-introduction-to-algorithms-sma-5503-fall-2005/readings/l12_skiplists.pdf" target="_blank" rel="external">MIT - Introduction to Algorithms - skiplist</a></li>
+<li>源码：可以参考 Redis 和 JDK 的实现</li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    AbandonZHANG
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.abandonzhang.me/2018/01/19/SkipList/" title="SkipList 跳表">http://blog.abandonzhang.me/2018/01/19/SkipList/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据结构/" rel="tag"># 数据结构</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/04/JVM-Args-Recommend/" rel="next" title="JVM 参数">
+                <i class="fa fa-chevron-left"></i> JVM 参数
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="AbandonZHANG" />
+            
+              <p class="site-author-name" itemprop="name">AbandonZHANG</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#应用范围"><span class="nav-number">1.</span> <span class="nav-text">应用范围</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现原理"><span class="nav-number">2.</span> <span class="nav-text">实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#查询"><span class="nav-number">2.1.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#插入"><span class="nav-number">2.2.</span> <span class="nav-text">插入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除"><span class="nav-number">2.3.</span> <span class="nav-text">删除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#退化"><span class="nav-number">2.4.</span> <span class="nav-text">退化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文档"><span class="nav-number">3.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">AbandonZHANG ♥ clytze</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.1"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+
+<!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+</body>
+</html>

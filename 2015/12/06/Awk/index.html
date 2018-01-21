@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.1" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.1" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+
+  
+  <meta name="keywords" content="Linux," />
+
+
+<meta name="description" content="awk 是一个强大的文本处理语言，由贝尔实验室在1977年发布，名字取自它的三位创造者 Alfred Aho、Peter Weinberger 和 Brian Kernighan 名字的首字母。作为一个已经有38年历史的工具，awk 如今在文本处理中的地位仍然不可动摇，可称得上是一件上古神器了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="awk - 强大的文本处理语言">
+<meta property="og:url" content="http://blog.abandonzhang.me/2015/12/06/Awk/index.html">
+<meta property="og:site_name" content="蝸牛">
+<meta property="og:description" content="awk 是一个强大的文本处理语言，由贝尔实验室在1977年发布，名字取自它的三位创造者 Alfred Aho、Peter Weinberger 和 Brian Kernighan 名字的首字母。作为一个已经有38年历史的工具，awk 如今在文本处理中的地位仍然不可动摇，可称得上是一件上古神器了。">
+<meta property="og:updated_time" content="2018-01-21T10:14:19.679Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="awk - 强大的文本处理语言">
+<meta name="twitter:description" content="awk 是一个强大的文本处理语言，由贝尔实验室在1977年发布，名字取自它的三位创造者 Alfred Aho、Peter Weinberger 和 Brian Kernighan 名字的首字母。作为一个已经有38年历史的工具，awk 如今在文本处理中的地位仍然不可动摇，可称得上是一件上古神器了。">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="蝸牛" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://blog.abandonzhang.me/2015/12/06/Awk/"/>
+
+
+  <title>awk - 强大的文本处理语言 | 蝸牛</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蝸牛</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">小小的天有大大的夢想</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2015/12/06/Awk/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="AbandonZHANG">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蝸牛">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">awk - 强大的文本处理语言</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-12-06T16:14:55+08:00">Dec 06, 2015</time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>awk 是一个强大的文本处理语言，由贝尔实验室在1977年发布，名字取自它的三位创造者 Alfred Aho、Peter Weinberger 和 Brian Kernighan 名字的首字母。作为一个已经有38年历史的工具，awk 如今在文本处理中的地位仍然不可动摇，可称得上是一件上古神器了。</p>
+<a id="more"></a>
+<p>与 sed 相比，awk 的语法更加丰富和灵活，<a href="https://en.wikipedia.org/wiki/AWK" target="_blank" rel="external">它甚至是一种图灵完备的脚本语言</a>。sed 可以实现的功能 awk 都可以实现。</p>
+<h2 id="awk程序结构"><a href="#awk程序结构" class="headerlink" title="awk程序结构"></a>awk程序结构</h2><p>awk程序由一系列“pattern-action”模块组成：<br><figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* awk_file */</span></span><br><span class="line"><span class="class">pattern</span><br><span class="line"></span>&#123;</span><br><span class="line">	action</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class">pattern</span><br><span class="line"></span>&#123;</span><br><span class="line">	action</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中，pattern指定了awk程序可以执行它对应的action语句的条件，它可以是：</p>
+<ul>
+<li>BEGIN<br>该模块下的action将会在awk读取数据之前执行。</li>
+<li>END<br>该模块下的action将会在awk处理完所有数据之后执行。</li>
+<li>（关系or逻辑or正则）表达式<br>该模块下的action将会在当前记录满足表达式时执行。</li>
+<li>pattern1, pattern2 {action}<br>该模块下的action会在找到满足pattern1模式的记录时开始执行，在找到满足pattern2模式的记录后停止执行（满足pattern2模式的记录仍然会执行），即这两个记录之间的所有记录都会执行。</li>
+</ul>
+<h2 id="How-awk-works"><a href="#How-awk-works" class="headerlink" title="How awk works"></a>How awk works</h2><p>awk程序以行为单位读入和处理文本，一个标准的awk处理过程如下：</p>
+<ol>
+<li>从输入流中读入一行<code>记录</code>（默认记录分隔符<code>RS</code>为换行符），将其分割成若干个<code>字段</code>（默认字段分隔符<code>FS</code>为空格）。</li>
+<li>匹配每一个pattern，如果成功匹配pattern则执行它对应的action。</li>
+<li>如果遇到<code>EOF</code>（文件末尾，或Linux环境标准输入的Ctrl-D信号）则退出，否则转到步骤1继续读取下一行记录。</li>
+</ol>
+<h2 id="awk基本语法"><a href="#awk基本语法" class="headerlink" title="awk基本语法"></a>awk基本语法</h2><p>awk具备一个脚本语言该有的基本元素：变量、数组、函数、表达式、流程控制等。</p>
+<h3 id="变量"><a href="#变量" class="headerlink" title="变量"></a>变量</h3><p>awk可以像其他语言一样定义一个变量（无需显式定义类型），并且给它赋值，如：sum = 0。同时awk还有一些常用的内置变量：</p>
+<table>
+<thead>
+<tr>
+<th>awk内置变量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$0</td>
+<td>当前记录的整个内容</td>
+</tr>
+<tr>
+<td>$n</td>
+<td>n是一个整数，$n表示当前记录被分隔后的第n个字段</td>
+</tr>
+<tr>
+<td>FILENAME</td>
+<td>当前处理文件名</td>
+</tr>
+<tr>
+<td>FS</td>
+<td>分隔符，FS = “:”效果等同于awk -F”:”</td>
+</tr>
+<tr>
+<td>NF</td>
+<td>当前记录被分隔的字段数</td>
+</tr>
+<tr>
+<td>NR</td>
+<td>当前记录的行号</td>
+</tr>
+<tr>
+<td>RS</td>
+<td>记录分隔符（默认是一个换行符）</td>
+</tr>
+<tr>
+<td>OFS</td>
+<td>输出域分隔符，即分隔print命令的参数的符号。其默认值为空格。</td>
+</tr>
+<tr>
+<td>ORS</td>
+<td>输出记录分隔符，即每个print命令之间的符号。其默认值为换行符。</td>
+</tr>
+<tr>
+<td>OFMT</td>
+<td>数字的输出格式（默认是%.6g）</td>
+</tr>
+</tbody>
+</table>
+<p>练习：打印file文件第1~5行的倒数第二个字段<br><figure class="highlight delphi"><table><tr><td class="code"><pre><span class="line">awk <span class="string">'NR==1, NR==5&#123;print $(NF-1)&#125;'</span> <span class="keyword">file</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h3><p>awk可以定义类似PHP的关联数组，且不必显示定义和初始化。数组的键值可以是整形，也可以是字符串。如：sum[0], sum[“test”]。</p>
+<p>虽然awk在存储上并不支持二维数组，但是它提供了逻辑上的访问方法。如sum[i, j] = 1是合法的。</p>
+<h3 id="运算与表达式"><a href="#运算与表达式" class="headerlink" title="运算与表达式"></a>运算与表达式</h3><p>awk和其他高级程序设计语言一样支持多样的运算和表达式：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>算术运算符</td>
+<td>+ - * / %(取余) ^(幂) ++ --</td>
+</tr>
+<tr>
+<td>赋值运算符</td>
+<td>= += -= *= /= %= ^=</td>
+</tr>
+<tr>
+<td>逻辑运算符</td>
+<td>&amp;&amp; &brvbar;&brvbar; !</td>
+</tr>
+<tr>
+<td>关系运算符</td>
+<td>&lt; &gt; == != &gt;= &lt;=</td>
+</tr>
+<tr>
+<td>正则运算符</td>
+<td>~ 表示匹配正则表达式，!~ 表示不匹配正则表达式</td>
+</tr>
+<tr>
+<td>其他运算符</td>
+<td>$，字段引用符； 空格，字符串连接符；?:，条件表达式；in，数组查找；etc…</td>
+</tr>
+</tbody>
+</table>
+<p>awk的表达式由换行或分号隔开。</p>
+<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><p>awk定义函数以function开头，无需声明返回类型和参数类型，如下：<br><figure class="highlight actionscript"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">add_one</span><span class="params">(num)</span></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> num + <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">add_one(<span class="number">3</span>)</span><br></pre></td></tr></table></figure></p>
+<h4 id="内置函数"><a href="#内置函数" class="headerlink" title="内置函数"></a>内置函数</h4><p>awk中有很多实用的内置函数，下面举几个常用的：</p>
+<table>
+<thead>
+<tr>
+<th>awk内置函数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>int(x)</td>
+<td>返回x的整数部分</td>
+</tr>
+<tr>
+<td>index(string1, string2)</td>
+<td>返回string2首次在string1中出现的位置，从1开始编号。没有出现返回0</td>
+</tr>
+<tr>
+<td>length(string)</td>
+<td>返回string的字符长度</td>
+</tr>
+<tr>
+<td>blength(string)</td>
+<td>返回string的字节长度</td>
+</tr>
+<tr>
+<td>substr(string, begin_pos, length)</td>
+<td>返回string的从begin_pos开始length长度的子字符串</td>
+</tr>
+<tr>
+<td>match(string, regEx)</td>
+<td>返回string首次匹配扩展正则表达式的位置，不匹配返回0</td>
+</tr>
+<tr>
+<td>split(string, A, [regEx])</td>
+<td>按照扩展正则表达式表示的分隔符将string分割成字段存储在A中。默认分隔符为FS</td>
+</tr>
+<tr>
+<td>sprintf(format, expr, expr, …)</td>
+<td>格式化输出字符串</td>
+</tr>
+<tr>
+<td>systime()</td>
+<td>返回当前的UNIX时间戳</td>
+</tr>
+</tbody>
+</table>
+<h3 id="流程控制"><a href="#流程控制" class="headerlink" title="流程控制"></a>流程控制</h3><h4 id="条件判断"><a href="#条件判断" class="headerlink" title="条件判断"></a>条件判断</h4><figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">if</span> (expr1)&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"><span class="selector-tag">else</span> <span class="selector-tag">if</span> (expr2)&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"><span class="selector-tag">else</span> &#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="循环"><a href="#循环" class="headerlink" title="循环"></a>循环</h4><figure class="highlight gcode"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 1</span></span><br><span class="line">for <span class="comment">(i = 0; i &lt; NF; i ++)</span>&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2</span></span><br><span class="line">for <span class="comment">(i in a)</span>&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight gcode"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 1</span></span><br><span class="line"><span class="keyword">while</span> <span class="comment">(i &lt; NF)</span>&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2</span></span><br><span class="line"><span class="keyword">do</span>&#123;</span><br><span class="line">	...</span><br><span class="line">&#125; <span class="keyword">while</span> <span class="comment">()</span>;</span><br></pre></td></tr></table></figure>
+<h4 id="next语句"><a href="#next语句" class="headerlink" title="next语句"></a>next语句</h4><p>awk在流程控制方面除了有break、continue外，还有一个next语句，表示本条记录不进行之后的操作，直接开始读取和处理下一条记录。</p>
+<h3 id="输出"><a href="#输出" class="headerlink" title="输出"></a>输出</h3><h4 id="print-命令"><a href="#print-命令" class="headerlink" title="print 命令"></a>print 命令</h4><p>print命令可用于简单的输入文本。print后可带多个变量，以”,”逗号隔开。awk将按顺序打印，并以”输出记录分隔符”(ORS)分割的，默认为换行符，我们可以通过给ORS赋值来控制输出字段的分隔符。<br><figure class="highlight xquery"><table><tr><td class="code"><pre><span class="line">print $1;</span><br><span class="line">print $2, $3, $4;</span><br><span class="line">print add_one(<span class="number">1</span>);</span><br></pre></td></tr></table></figure></p>
+<h4 id="printf-格式化输出"><a href="#printf-格式化输出" class="headerlink" title="printf 格式化输出"></a>printf 格式化输出</h4><p>printf是awk的一个格式化输出的函数，其格式类似C语言的printf，如下：<br><figure class="highlight perl"><table><tr><td class="code"><pre><span class="line"><span class="keyword">printf</span>(<span class="string">"I am %s, %d years old."</span>, name, age);</span><br></pre></td></tr></table></figure></p>
+<h4 id="重定向输出"><a href="#重定向输出" class="headerlink" title="重定向输出"></a>重定向输出</h4><p>print和printf默认都是输出到stdout（控制台）。通过在print和printf语句后使用”&gt;”操作符可以将输出重定向到文件。如：<br><figure class="highlight xquery"><table><tr><td class="code"><pre><span class="line">print $1 &gt; file;</span><br><span class="line">printf(<span class="string">"This is a demo."</span>) &gt; file;</span><br></pre></td></tr></table></figure></p>
+<h2 id="如何执行awk脚本"><a href="#如何执行awk脚本" class="headerlink" title="如何执行awk脚本"></a>如何执行awk脚本</h2><p>执行awk脚本有两种方法：</p>
+<ul>
+<li><p>如其他脚本语言一样，将awk程序写在文件中，然后执行：</p>
+<figure class="highlight autohotkey"><table><tr><td class="code"><pre><span class="line">awk -f awk_file dat<span class="built_in">a_file</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>或者直接将代码写在命令行中，用单引号括起来：（这种方式让用户在做一些只需简短命令的文本处理任务时效率很高）</p>
+<figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="attribute">awk</span> <span class="string">'...script...'</span> data_file</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>awk还可以使用-F参数指定分隔符<br><figure class="highlight r"><table><tr><td class="code"><pre><span class="line">awk -<span class="literal">F</span><span class="string">':'</span> <span class="string">'...script...'</span> data_file	// 以<span class="string">":"</span>为分隔符</span><br><span class="line">awk -<span class="literal">F</span><span class="string">'[:@*]'</span> <span class="string">'...script...'</span> data_file	// 以<span class="string">":"</span>,<span class="string">"@"</span>,<span class="string">"*"</span>为分隔符</span><br></pre></td></tr></table></figure></p>
+<p>也可以一次处理多个file，awk将按顺序读入<br><figure class="highlight autohotkey"><table><tr><td class="code"><pre><span class="line">awk '...script...' dat<span class="built_in">a_file1</span> dat<span class="built_in">a_file2</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="推荐书籍"><a href="#推荐书籍" class="headerlink" title="推荐书籍"></a>推荐书籍</h2><ol>
+<li><em>The AWK Programming Language</em></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    AbandonZHANG
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.abandonzhang.me/2015/12/06/Awk/" title="awk - 强大的文本处理语言">http://blog.abandonzhang.me/2015/12/06/Awk/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux/" rel="tag"># Linux</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/09/Password/" rel="next" title="如何正确存储用户密码">
+                <i class="fa fa-chevron-left"></i> 如何正确存储用户密码
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/03/Sed/" rel="prev" title="sed - 高效的文本替换语言">
+                sed - 高效的文本替换语言 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="AbandonZHANG" />
+            
+              <p class="site-author-name" itemprop="name">AbandonZHANG</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#awk程序结构"><span class="nav-number">1.</span> <span class="nav-text">awk程序结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#How-awk-works"><span class="nav-number">2.</span> <span class="nav-text">How awk works</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#awk基本语法"><span class="nav-number">3.</span> <span class="nav-text">awk基本语法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#变量"><span class="nav-number">3.1.</span> <span class="nav-text">变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数组"><span class="nav-number">3.2.</span> <span class="nav-text">数组</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#运算与表达式"><span class="nav-number">3.3.</span> <span class="nav-text">运算与表达式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#函数"><span class="nav-number">3.4.</span> <span class="nav-text">函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#内置函数"><span class="nav-number">3.4.1.</span> <span class="nav-text">内置函数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#流程控制"><span class="nav-number">3.5.</span> <span class="nav-text">流程控制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#条件判断"><span class="nav-number">3.5.1.</span> <span class="nav-text">条件判断</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#循环"><span class="nav-number">3.5.2.</span> <span class="nav-text">循环</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#next语句"><span class="nav-number">3.5.3.</span> <span class="nav-text">next语句</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#输出"><span class="nav-number">3.6.</span> <span class="nav-text">输出</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#print-命令"><span class="nav-number">3.6.1.</span> <span class="nav-text">print 命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#printf-格式化输出"><span class="nav-number">3.6.2.</span> <span class="nav-text">printf 格式化输出</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#重定向输出"><span class="nav-number">3.6.3.</span> <span class="nav-text">重定向输出</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何执行awk脚本"><span class="nav-number">4.</span> <span class="nav-text">如何执行awk脚本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#推荐书籍"><span class="nav-number">5.</span> <span class="nav-text">推荐书籍</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">AbandonZHANG ♥ clytze</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.1"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+
+<!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+</body>
+</html>

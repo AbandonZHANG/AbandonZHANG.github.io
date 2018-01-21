@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.1" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.1" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+
+  
+  <meta name="keywords" content="MySQL," />
+
+
+<meta name="description" content="注：本文的源码均来自 Percona Server release-5.7.17-12
+Lock ModesLock Mode 表示 InnoDB 中基本的加锁模式。在 /include/lock0type.h 中定义：/* Basic lock modes */enum lock_mode &amp;#123;    LOCK_IS = 0,    /* intention shared */    L">
+<meta property="og:type" content="article">
+<meta property="og:title" content="InnoDB 存储引擎学习 —— 锁">
+<meta property="og:url" content="http://blog.abandonzhang.me/2017/02/27/MySQL-InnoDB-Locks/index.html">
+<meta property="og:site_name" content="蝸牛">
+<meta property="og:description" content="注：本文的源码均来自 Percona Server release-5.7.17-12
+Lock ModesLock Mode 表示 InnoDB 中基本的加锁模式。在 /include/lock0type.h 中定义：/* Basic lock modes */enum lock_mode &amp;#123;    LOCK_IS = 0,    /* intention shared */    L">
+<meta property="og:updated_time" content="2018-01-21T10:14:19.672Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="InnoDB 存储引擎学习 —— 锁">
+<meta name="twitter:description" content="注：本文的源码均来自 Percona Server release-5.7.17-12
+Lock ModesLock Mode 表示 InnoDB 中基本的加锁模式。在 /include/lock0type.h 中定义：/* Basic lock modes */enum lock_mode &amp;#123;    LOCK_IS = 0,    /* intention shared */    L">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="蝸牛" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://blog.abandonzhang.me/2017/02/27/MySQL-InnoDB-Locks/"/>
+
+
+  <title>InnoDB 存储引擎学习 —— 锁 | 蝸牛</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蝸牛</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">小小的天有大大的夢想</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2017/02/27/MySQL-InnoDB-Locks/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="AbandonZHANG">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蝸牛">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">InnoDB 存储引擎学习 —— 锁</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-02-27T22:33:38+08:00">Feb 27, 2017</time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>注：本文的源码均来自 <a href="https://github.com/percona/percona-server/tree/release-5.7.17-12" target="_blank" rel="external">Percona Server release-5.7.17-12</a></p>
+<h2 id="Lock-Modes"><a href="#Lock-Modes" class="headerlink" title="Lock Modes"></a>Lock Modes</h2><p>Lock Mode 表示 InnoDB 中基本的加锁模式。在 /include/lock0type.h 中定义：<br><figure class="highlight gherkin"><table><tr><td class="code"><pre><span class="line">/<span class="keyword">*</span> Basic lock modes <span class="keyword">*</span>/</span><br><span class="line">enum lock_mode &#123;</span><br><span class="line">    LOCK_IS = 0,    /<span class="keyword">*</span> intention shared <span class="keyword">*</span>/</span><br><span class="line">    LOCK_IX,        /<span class="keyword">*</span> intention exclusive <span class="keyword">*</span>/</span><br><span class="line">    LOCK_S,         /<span class="keyword">*</span> shared <span class="keyword">*</span>/</span><br><span class="line">    LOCK_X,         /<span class="keyword">*</span> exclusive <span class="keyword">*</span>/</span><br><span class="line">    LOCK_AUTO_INC,  /<span class="keyword">*</span> locks the auto-inc counter of a table in an exclusive mode <span class="keyword">*</span>/</span><br><span class="line">    LOCK_NONE,      /<span class="keyword">*</span> this is used elsewhere to note consistent read <span class="keyword">*</span>/</span><br><span class="line">    LOCK_NUM = LOCK_NONE, /<span class="keyword">*</span> number of lock modes <span class="keyword">*</span>/</span><br><span class="line">    LOCK_NONE_UNSET = 255</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<a id="more"></a>
+<p>在 /include/lock0lock.h 中定义了获取加锁模式的掩码：<br><figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">/** Lock modes and types */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_MODE_MASK  0xFUL   <span class="comment">/*!&lt; mask used to extract mode from the</span><br><span class="line">                type_mode field in a lock */</span></span></span><br></pre></td></tr></table></figure></p>
+<p>可以通过掩码从 lock 对象的 type_mode 属性中获取到该 lock 的加锁模式。</p>
+<p>下面分别介绍一下几种加锁模式。</p>
+<h3 id="Shared-Lock-amp-amp-Exclusive-Lock"><a href="#Shared-Lock-amp-amp-Exclusive-Lock" class="headerlink" title="Shared Lock &amp;&amp; Exclusive Lock"></a>Shared Lock &amp;&amp; Exclusive Lock</h3><p>S锁和X锁是最常见的两种锁模式：</p>
+<ul>
+<li>S锁之间是兼容（Compatible）的，即一个S锁可以加在一个已有S锁的对象上。</li>
+<li>X锁与任何锁都是冲突（Conflict）的，即一个S/X锁不可以加在一个已有X锁的对象上，一个X锁也不可以加在一个已有S/X锁的对象上。</li>
+</ul>
+<p>S锁通常用于 Locking Reads（中文有时候类似的叫作“当前读”）下读操作的授权，X锁通常用于写操作的授权。</p>
+<h3 id="Intention-Lock"><a href="#Intention-Lock" class="headerlink" title="Intention Lock"></a>Intention Lock</h3><p>意向锁是<a href="https://en.wikipedia.org/wiki/Multiple_granularity_locking" target="_blank" rel="external">多粒度锁（MGL）</a>的加锁方式中引入的一种锁，解决了给祖先节点（粗力度锁）加锁时需要遍历子辈节点（细粒度锁）的问题。MySQL 中也使用了多粒度锁（表锁，行锁），因此 MySQL 中也需要意向锁。</p>
+<p>与S锁和X锁相对应，意向锁也分为意向共享锁（IS锁）和意向排它锁（IX锁）。（其他意向锁实现中还有一种 SIX 锁，不过 InnoDB 中没有）</p>
+<p>意向锁协议：</p>
+<ul>
+<li>在为一个节点加S、IS锁前，需要它的所有祖先节点都持有IS锁或者约束更强的IX锁。</li>
+<li>在为一个节点加X、IX锁前，需要它的所有祖先节点都持有IX锁。</li>
+</ul>
+<p>意向锁之间是互相兼容的，它们只会与S、X锁冲突：IS锁与X锁有冲突，IX锁与S、X锁都冲突。</p>
+<h4 id="Intention-Lock-in-InnoDB"><a href="#Intention-Lock-in-InnoDB" class="headerlink" title="Intention Lock in InnoDB"></a>Intention Lock in InnoDB</h4><p>在 InnoDB 中，意向锁是一个表级锁，表示这个表的某些行即将或正在持有相应的行锁。</p>
+<p>下面来一个实例：</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> <span class="keyword">test</span> <span class="keyword">where</span> <span class="keyword">id</span>=<span class="number">3</span> <span class="keyword">lock</span> <span class="keyword">in</span> <span class="keyword">share</span> <span class="keyword">mode</span></span><br></pre></td></tr></table></figure>
+<p>使用 Show Engine InnoDB Status\G 可以看到（需要通过 CREATE TABLE innodb_lock_monitor (a INT) ENGINE=INNODB 打开 InnoDB 的锁监控）：</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">TABLE <span class="keyword">LOCK</span> <span class="keyword">table</span> <span class="string">`test`</span>.<span class="string">`test`</span> trx <span class="keyword">id</span> <span class="number">12</span>D7188DE9 <span class="keyword">lock</span> <span class="keyword">mode</span> <span class="keyword">IS</span></span><br><span class="line"><span class="built_in">RECORD</span> LOCKS <span class="keyword">space</span> <span class="keyword">id</span> <span class="number">200923</span> page <span class="keyword">no</span> <span class="number">3</span> n bits <span class="number">72</span> <span class="keyword">index</span> <span class="string">`PRIMARY`</span> <span class="keyword">of</span> <span class="keyword">table</span> <span class="string">`test`</span>.<span class="string">`test`</span> trx <span class="keyword">id</span> <span class="number">12</span>D7188DE9 <span class="keyword">lock</span> <span class="keyword">mode</span> S locks rec but <span class="keyword">not</span> gap</span><br></pre></td></tr></table></figure>
+<h3 id="Auto-increment-Lock"><a href="#Auto-increment-Lock" class="headerlink" title="Auto-increment Lock"></a>Auto-increment Lock</h3><p>在 InnoDB 中，每个含有自增长列的表都有一个自增长计数器，插入时会将这个自增长的计数器值加1然后赋给自增长列。</p>
+<p>AUTO-INC Lock 是 InnoDB 防止多事务并发插入获取自增值时发生竞争条件（Race Condition）的一种实现。它是一种特殊的表级锁，并且为了提高并发性能，它不会等到事务结束后才释放，而是在插入语句完成后便立即释放。</p>
+<h4 id="Mutex-Lock-and-Statement-Lock"><a href="#Mutex-Lock-and-Statement-Lock" class="headerlink" title="Mutex Lock and Statement Lock"></a>Mutex Lock and Statement Lock</h4><p>如上所说，AUTO-INC Lock 是一个语句级别的锁（Statement Lock），但它的并发性能仍然不够高：另一个事务的插入语句仍然需要等前一个事务的插入语句执行完才会开始执行。如果前一个事务是一个大数据量的批量插入操作，就会阻塞另一个事务的插入操作。</p>
+<p>为了解决这个问题，InnoDB 提供了另一种基于操作系统的 Mutex 互斥锁。它会在计数器分配完自增值后就立即释放锁。</p>
+<p>InnoDB 提供了一个参数 innodb_autoinc_lock_mode 来配置自增的优化策略：</p>
+<ul>
+<li>innodb_autoinc_lock_mode=0<br>所有的“INSERT-like”语句都会在需要申请自增值时加上 AUTO-INC Lock。（“INSERT-like”语句指 Insert, Insert … Select, Replace, Replace … Select, Load Data）</li>
+<li>innodb_autoinc_lock_mode=1（默认配置）<br>“Simple inserts”语句会通过 Mutex 锁来获取需要数量的自增值去分配，但是当有另一个事务已持有 AUTO-INC Lock 时，“Simple inserts”语句还是需要等待 AUTO-INC Lock 释放；“Bulk inserts”语句保持传统的使用 AUTO-INC Lock 的加锁方式。（“Simple inserts”语句是指能够确定插入行数的 Insert 语句，如 Insert Into … Values；“Bulk inserts”语句就是指无法事先确定插入行数的 Insert 语句，如 Insert … Select）</li>
+<li>innodb_autoinc_lock_mode=2<br>所有的“INSERT-like”语句都会使用 Mutex 锁而不是 AUTO-INC Lock。在这个模式下，“Bulk Insert”插入是不能保证自增值是连续的；更重要的是，Statement-Base Replication 的主从一致会有问题，需要使用 Row-Base Replication （Why?）。</li>
+</ul>
+<h3 id="Compatibility-Matrix"><a href="#Compatibility-Matrix" class="headerlink" title="Compatibility Matrix"></a>Compatibility Matrix</h3><p>InnoDB 在 /include/lock0priv.h 文件中维护了一份各个锁模式之间的互斥模型：<br><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> const <span class="keyword">byte</span> lock_compatibility_matrix[<span class="number">5</span>][<span class="number">5</span>] = &#123;</span><br><span class="line"> <span class="comment">/**         IS     IX       S     X       AI */</span></span><br><span class="line"> <span class="comment">/* IS */</span> &#123;  <span class="keyword">TRUE</span>,  <span class="keyword">TRUE</span>,  <span class="keyword">TRUE</span>,  <span class="keyword">FALSE</span>,  <span class="keyword">TRUE</span>&#125;,</span><br><span class="line"> <span class="comment">/* IX */</span> &#123;  <span class="keyword">TRUE</span>,  <span class="keyword">TRUE</span>,  <span class="keyword">FALSE</span>, <span class="keyword">FALSE</span>,  <span class="keyword">TRUE</span>&#125;,</span><br><span class="line"> <span class="comment">/* S  */</span> &#123;  <span class="keyword">TRUE</span>,  <span class="keyword">FALSE</span>, <span class="keyword">TRUE</span>,  <span class="keyword">FALSE</span>,  <span class="keyword">FALSE</span>&#125;,</span><br><span class="line"> <span class="comment">/* X  */</span> &#123;  <span class="keyword">FALSE</span>, <span class="keyword">FALSE</span>, <span class="keyword">FALSE</span>, <span class="keyword">FALSE</span>,  <span class="keyword">FALSE</span>&#125;,</span><br><span class="line"> <span class="comment">/* AI */</span> &#123;  <span class="keyword">TRUE</span>,  <span class="keyword">TRUE</span>,  <span class="keyword">FALSE</span>, <span class="keyword">FALSE</span>,  <span class="keyword">FALSE</span>&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<h2 id="Lock-Type"><a href="#Lock-Type" class="headerlink" title="Lock Type"></a>Lock Type</h2><p>/include/lock0lock.h 定义了 InnoDB 中用到的锁的类型。这是另一个维度的定义，与 Lock Mode 并不冲突。</p>
+<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">/** Lock types */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 笔者注：这里定义了两种基本类型 */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_TABLE  16  <span class="comment">/*!&lt; table lock */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_REC    32  <span class="comment">/*!&lt; record lock */</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 笔者注：定义了基本类型的掩码，可以从 lock 对象的 type_mode 属性中提取出 lock 的基本类型 */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_TYPE_MASK  0xF0UL</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*!&lt; Waiting lock flag; when set, it means that the lock has not yet been granted, it is just waiting for its turn in the wait queue */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_WAIT   256 </span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 笔者注：这里定义了几种更具体的类型 */</span></span><br><span class="line"><span class="comment">/* Precise modes */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_ORDINARY   0</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_GAP    512</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_REC_NOT_GAP 1024</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_INSERT_INTENTION 2048</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_PREDICATE  8192</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> LOCK_PRDT_PAGE  16384</span></span><br></pre></td></tr></table></figure>
+<p>下面来具体说一下各个类型。（LOCK_PREDICATE、LOCK_PRDT_PAGE 资料比较少，还不太了解，先省略）</p>
+<h3 id="基本类型"><a href="#基本类型" class="headerlink" title="基本类型"></a>基本类型</h3><p>LOCK_TABLE 和 LOCK_REC 是两个基本类型，分别表示表锁和记录锁（行锁）。其中 LOCK_REC 是一个宽泛的概念，并不特指锁的范围是一条记录。他是 LOCK_ORDINARY、LOCK_GAP、LOCK_REC_NOT_GAP 的一个汇总概念，广义上讲他们都是记录锁。</p>
+<h3 id="LOCK-REC-NOT-GAP-Record-Lock"><a href="#LOCK-REC-NOT-GAP-Record-Lock" class="headerlink" title="LOCK_REC_NOT_GAP (Record Lock)"></a>LOCK_REC_NOT_GAP (Record Lock)</h3><p>这个是真正狭义上的记录锁，它的锁定范围就是 InnoDB 中的一条索引记录。</p>
+<p>在 Repeatable Read 隔离级别下，当遇到<br>1.唯一索引（或主键索引）<br>2.且是等值查询<br>3.且对应记录存在<br>时，InnoDB 就会在该索引记录上加一个 LOCK_REC_NOT_GAP 锁。</p>
+<p>如：<br><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> bizacct <span class="keyword">where</span> <span class="keyword">id</span>=<span class="number">66283</span> <span class="keyword">lock</span> <span class="keyword">in</span> <span class="keyword">share</span> <span class="keyword">mode</span>;</span><br></pre></td></tr></table></figure></p>
+<p>这里 id 是主键索引，并且 66283 这个值对应的记录是存在的。Show Engine InnoDB Status 一下:<br><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">---TRANSACTION 2044, ACTIVE 1 sec</span></span><br><span class="line">2 <span class="keyword">lock</span> <span class="keyword">struct</span>(s), <span class="keyword">heap</span> <span class="keyword">size</span> <span class="number">360</span>, <span class="number">1</span> <span class="keyword">row</span> <span class="keyword">lock</span>(s)</span><br><span class="line">MySQL <span class="keyword">thread</span> <span class="keyword">id</span> <span class="number">20610</span>, OS <span class="keyword">thread</span> handle <span class="number">0x7f28cfe7c700</span>, <span class="keyword">query</span> <span class="keyword">id</span> <span class="number">50114</span> <span class="number">172.26</span><span class="number">.11</span><span class="number">.113</span> <span class="keyword">admin</span> cleaning up</span><br><span class="line"><span class="keyword">TABLE</span> <span class="keyword">LOCK</span> <span class="keyword">table</span> <span class="string">`zzptest`</span>.<span class="string">`bizacct`</span> trx <span class="keyword">id</span> <span class="number">2044</span> <span class="keyword">lock</span> <span class="keyword">mode</span> <span class="keyword">IS</span></span><br><span class="line"><span class="built_in">RECORD</span> LOCKS <span class="keyword">space</span> <span class="keyword">id</span> <span class="number">6</span> page <span class="keyword">no</span> <span class="number">1621</span> n bits <span class="number">168</span> <span class="keyword">index</span> <span class="string">`PRIMARY`</span> <span class="keyword">of</span> <span class="keyword">table</span> <span class="string">`zzptest`</span>.<span class="string">`bizacct`</span> trx <span class="keyword">id</span> <span class="number">2044</span> <span class="keyword">lock</span> <span class="keyword">mode</span> S locks rec but <span class="keyword">not</span> gap</span><br></pre></td></tr></table></figure></p>
+<p>可以看到在对应的索引记录上有一个 lock mode S locks rec but not gap。</p>
+<p>在 Read Committed 隔离级别下，不会产生下面提到的 Gap Lock，因此索引记录上加的也都是 LOCK_REC_NOT_GAP 锁。</p>
+<h3 id="LOCK-GAP-Gap-Lock"><a href="#LOCK-GAP-Gap-Lock" class="headerlink" title="LOCK_GAP (Gap Lock)"></a>LOCK_GAP (Gap Lock)</h3><p>在 InnoDB 默认的隔离级别 Repeatable Read 下，为了解决 Locking Reads 下的<a href="https://zh.wikipedia.org/wiki/%E4%BA%8B%E5%8B%99%E9%9A%94%E9%9B%A2#.E5.B9.BB.E5.BD.B1.E8.AF.BB" target="_blank" rel="external">幻读</a>问题，InnoDB 会在扫描到的索引记录与上一个索引记录之间的间隙上也加一把锁，这种类型的锁就叫 Gap 锁。Gap 锁是 Repeatable Read 隔离级别下才有的锁。</p>
+<p>索引的“间隙”体现在索引列的值上则是一个左开右闭的区间。如索引列X有值4和6，那么6对应的 Gap 锁就是 (4,6]</p>
+<p>在 InnoDB 中，Gap 锁通常不会单独出现，而是以下面将要说到的 Next-key 锁的方式出现。当然，在特定条件下还是存在单独的 Gap 锁的。比如如果这条记录不存在，那不就没法加 Record 锁了么。</p>
+<p>如：<br><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> bizacct <span class="keyword">where</span> <span class="keyword">id</span>=<span class="number">23000000</span> <span class="keyword">lock</span> <span class="keyword">in</span> <span class="keyword">share</span> <span class="keyword">mode</span>;</span><br></pre></td></tr></table></figure></p>
+<p>这里 id 是主键索引，但是 23000000 这个值对应的记录是不存在的。Show Engine InnoDB Status 一下:<br><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">---TRANSACTION 2049, ACTIVE 17 sec</span></span><br><span class="line">2 <span class="keyword">lock</span> <span class="keyword">struct</span>(s), <span class="keyword">heap</span> <span class="keyword">size</span> <span class="number">360</span>, <span class="number">1</span> <span class="keyword">row</span> <span class="keyword">lock</span>(s)</span><br><span class="line">MySQL <span class="keyword">thread</span> <span class="keyword">id</span> <span class="number">20610</span>, OS <span class="keyword">thread</span> handle <span class="number">0x7f28cfe7c700</span>, <span class="keyword">query</span> <span class="keyword">id</span> <span class="number">51053</span> <span class="number">172.26</span><span class="number">.11</span><span class="number">.113</span> <span class="keyword">admin</span> cleaning up</span><br><span class="line"><span class="keyword">TABLE</span> <span class="keyword">LOCK</span> <span class="keyword">table</span> <span class="string">`zzptest`</span>.<span class="string">`bizacct`</span> trx <span class="keyword">id</span> <span class="number">2049</span> <span class="keyword">lock</span> <span class="keyword">mode</span> <span class="keyword">IS</span></span><br><span class="line"><span class="built_in">RECORD</span> LOCKS <span class="keyword">space</span> <span class="keyword">id</span> <span class="number">6</span> page <span class="keyword">no</span> <span class="number">31846</span> n bits <span class="number">144</span> <span class="keyword">index</span> <span class="string">`PRIMARY`</span> <span class="keyword">of</span> <span class="keyword">table</span> <span class="string">`zzptest`</span>.<span class="string">`bizacct`</span> trx <span class="keyword">id</span> <span class="number">2049</span> <span class="keyword">lock</span> <span class="keyword">mode</span> S locks gap <span class="keyword">before</span> rec</span><br></pre></td></tr></table></figure></p>
+<p>总结一下：无论是唯一索引还是普通索引，无论是等值查询还是范围查询，在 Repeatable Read 隔离级别下，只要查找的对应记录不存在，就会加一把 LOCK_GAP 锁。</p>
+<h3 id="LOCK-ORDINARY-Next-key-Lock"><a href="#LOCK-ORDINARY-Next-key-Lock" class="headerlink" title="LOCK_ORDINARY (Next-key Lock)"></a>LOCK_ORDINARY (Next-key Lock)</h3><p>在 Repeatable Read 隔离级别下，大部分情况下 InnoDB 都会同时在索引记录上加一把 Record Lock 和一把 Gap Lock，这样一套组合锁就叫 Next-key 锁。</p>
+<p>这些情况有：</p>
+<ul>
+<li>非唯一索引下的等值查询（对应记录存在）</li>
+<li>范围查询（对应记录存在）</li>
+</ul>
+<p>如：<br><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> bizacct <span class="keyword">where</span> login=<span class="string">"mtpm"</span> <span class="keyword">lock</span> <span class="keyword">in</span> <span class="keyword">share</span> <span class="keyword">mode</span>;</span><br><span class="line">OR</span><br><span class="line"><span class="keyword">select</span> * <span class="keyword">from</span> bizacct <span class="keyword">where</span> login=<span class="string">"mtpm02"</span> <span class="keyword">lock</span> <span class="keyword">in</span> <span class="keyword">share</span> <span class="keyword">mode</span>;</span><br></pre></td></tr></table></figure></p>
+<p>这里 login 是普通索引，mtpm 对应的记录是存在且唯一的，mtpm02 对应的记录是存在且有多个的。它们两个 Show Engine InnoDB Status 后均是类似:<br><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">---TRANSACTION 2048, ACTIVE 121 sec</span></span><br><span class="line">3 <span class="keyword">lock</span> <span class="keyword">struct</span>(s), <span class="keyword">heap</span> <span class="keyword">size</span> <span class="number">1184</span>, <span class="number">2</span> <span class="keyword">row</span> <span class="keyword">lock</span>(s)</span><br><span class="line">MySQL <span class="keyword">thread</span> <span class="keyword">id</span> <span class="number">20610</span>, OS <span class="keyword">thread</span> handle <span class="number">0x7f28cfe7c700</span>, <span class="keyword">query</span> <span class="keyword">id</span> <span class="number">50364</span> <span class="number">172.26</span><span class="number">.11</span><span class="number">.113</span> <span class="keyword">admin</span> cleaning up</span><br><span class="line"><span class="keyword">TABLE</span> <span class="keyword">LOCK</span> <span class="keyword">table</span> <span class="string">`zzptest`</span>.<span class="string">`bizacct`</span> trx <span class="keyword">id</span> <span class="number">2048</span> <span class="keyword">lock</span> <span class="keyword">mode</span> <span class="keyword">IS</span></span><br><span class="line"><span class="built_in">RECORD</span> LOCKS <span class="keyword">space</span> <span class="keyword">id</span> <span class="number">6</span> page <span class="keyword">no</span> <span class="number">11736</span> n bits <span class="number">728</span> <span class="keyword">index</span> <span class="string">`idx_login`</span> <span class="keyword">of</span> <span class="keyword">table</span> <span class="string">`zzptest`</span>.<span class="string">`bizacct`</span> trx <span class="keyword">id</span> <span class="number">2048</span> <span class="keyword">lock</span> <span class="keyword">mode</span> S</span><br><span class="line"><span class="built_in">RECORD</span> LOCKS <span class="keyword">space</span> <span class="keyword">id</span> <span class="number">6</span> page <span class="keyword">no</span> <span class="number">11736</span> n bits <span class="number">728</span> <span class="keyword">index</span> <span class="string">`idx_login`</span> <span class="keyword">of</span> <span class="keyword">table</span> <span class="string">`zzptest`</span>.<span class="string">`bizacct`</span> trx <span class="keyword">id</span> <span class="number">2048</span> <span class="keyword">lock</span> <span class="keyword">mode</span> S locks gap <span class="keyword">before</span> rec</span><br></pre></td></tr></table></figure></p>
+<p>可以看到在对应的索引记录上有一个 lock mode S 以及 lock mode S locks gap before rec。</p>
+<h3 id="Insert-Intention-Locks（LOCK-INSERT-INTENTION）"><a href="#Insert-Intention-Locks（LOCK-INSERT-INTENTION）" class="headerlink" title="Insert Intention Locks（LOCK_INSERT_INTENTION）"></a>Insert Intention Locks（LOCK_INSERT_INTENTION）</h3><p>InnoDB 在 Insert 一条记录之后会在这条记录上加一把 X 锁。但是在 Insert 之前，也需要加锁来防止插入行可能造成的锁冲突，此时行记录还不存在所以无法加记录锁。</p>
+<p>插入意向锁是 Insert 操作前加的一种特殊的 Gap 锁。其特殊之处在于：同一段 Gap 上的插入意向锁，如果对应的插入行不同，它们是不会互相排斥的（猜测是因为意向锁之间也不会互相排斥，所以这个就叫插入意向锁）。当然，插入意向锁也会和普通的 Gap 锁一样对相应的记录锁和 Gap 锁排斥。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-locking.html" target="_blank" rel="external">MySQL 5.7 Reference Manual - InnoDB Locking</a></li>
+<li><a href="https://dev.mysql.com/doc/refman/5.7/en/innodb-auto-increment-handling.html" target="_blank" rel="external">MySQL 5.7 Reference Manual - AUTO_INCREMENT Handling in InnoDB</a></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    AbandonZHANG
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.abandonzhang.me/2017/02/27/MySQL-InnoDB-Locks/" title="InnoDB 存储引擎学习 —— 锁">http://blog.abandonzhang.me/2017/02/27/MySQL-InnoDB-Locks/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/29/Maven/" rel="next" title="Maven 核心概念和配置">
+                <i class="fa fa-chevron-left"></i> Maven 核心概念和配置
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/05/03/Idea-Plugin/" rel="prev" title="IntelliJ IDEA 插件推荐">
+                IntelliJ IDEA 插件推荐 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="AbandonZHANG" />
+            
+              <p class="site-author-name" itemprop="name">AbandonZHANG</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Lock-Modes"><span class="nav-number">1.</span> <span class="nav-text">Lock Modes</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Shared-Lock-amp-amp-Exclusive-Lock"><span class="nav-number">1.1.</span> <span class="nav-text">Shared Lock && Exclusive Lock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Intention-Lock"><span class="nav-number">1.2.</span> <span class="nav-text">Intention Lock</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Intention-Lock-in-InnoDB"><span class="nav-number">1.2.1.</span> <span class="nav-text">Intention Lock in InnoDB</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Auto-increment-Lock"><span class="nav-number">1.3.</span> <span class="nav-text">Auto-increment Lock</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Mutex-Lock-and-Statement-Lock"><span class="nav-number">1.3.1.</span> <span class="nav-text">Mutex Lock and Statement Lock</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Compatibility-Matrix"><span class="nav-number">1.4.</span> <span class="nav-text">Compatibility Matrix</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lock-Type"><span class="nav-number">2.</span> <span class="nav-text">Lock Type</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本类型"><span class="nav-number">2.1.</span> <span class="nav-text">基本类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LOCK-REC-NOT-GAP-Record-Lock"><span class="nav-number">2.2.</span> <span class="nav-text">LOCK_REC_NOT_GAP (Record Lock)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LOCK-GAP-Gap-Lock"><span class="nav-number">2.3.</span> <span class="nav-text">LOCK_GAP (Gap Lock)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LOCK-ORDINARY-Next-key-Lock"><span class="nav-number">2.4.</span> <span class="nav-text">LOCK_ORDINARY (Next-key Lock)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Insert-Intention-Locks（LOCK-INSERT-INTENTION）"><span class="nav-number">2.5.</span> <span class="nav-text">Insert Intention Locks（LOCK_INSERT_INTENTION）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">3.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">AbandonZHANG ♥ clytze</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.1"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+
+<!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+</body>
+</html>

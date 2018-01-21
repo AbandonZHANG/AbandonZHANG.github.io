@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.1" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.1" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+
+  
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+<meta name="description" content="OAuth 授权框架可以帮助采用 HTTP 协议的资源服务管理第三方应用对其资源的访问权限。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The OAuth 2.0 Authorization Framework 学习笔记">
+<meta property="og:url" content="http://blog.abandonzhang.me/2017/11/12/OAuth-2-0-Authorization-Framework/index.html">
+<meta property="og:site_name" content="蝸牛">
+<meta property="og:description" content="OAuth 授权框架可以帮助采用 HTTP 协议的资源服务管理第三方应用对其资源的访问权限。">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Abstract%20Protocol%20Flow">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Authorization%20Code%20Flow.png">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Implicit%20Grant%20Flow.png">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Resource%20Owner%20Password%20Credentials%20Flow">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Client%20Credentials%20Flow">
+<meta property="og:updated_time" content="2018-01-21T10:14:19.671Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="The OAuth 2.0 Authorization Framework 学习笔记">
+<meta name="twitter:description" content="OAuth 授权框架可以帮助采用 HTTP 协议的资源服务管理第三方应用对其资源的访问权限。">
+<meta name="twitter:image" content="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Abstract%20Protocol%20Flow">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="蝸牛" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://blog.abandonzhang.me/2017/11/12/OAuth-2-0-Authorization-Framework/"/>
+
+
+  <title>The OAuth 2.0 Authorization Framework 学习笔记 | 蝸牛</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蝸牛</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">小小的天有大大的夢想</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2017/11/12/OAuth-2-0-Authorization-Framework/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="AbandonZHANG">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蝸牛">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">The OAuth 2.0 Authorization Framework 学习笔记</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-12T11:43:55+08:00">Nov 12, 2017</time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>OAuth 授权框架可以帮助采用 HTTP 协议的资源服务管理第三方应用对其资源的访问权限。</p>
+<a id="more"></a>
+<h2 id="角色（Roles）"><a href="#角色（Roles）" class="headerlink" title="角色（Roles）"></a>角色（Roles）</h2><p>OAuth 2.0 标准中定义了四种角色：</p>
+<ul>
+<li><code>resource server</code>（<code>资源服务</code>） - 托管受保护资源的服务。</li>
+<li><code>resource owner</code>（<code>用户</code>） - 拥有某个受保护资源的授权资格的实体。</li>
+<li><code>client</code>：（<code>第三方应用</code>） - 需要访问某个受保护资源的应用。</li>
+<li><code>authorization server</code>（<code>授权服务</code>）：颁发可信的授权令牌（<code>token</code>）的服务。</li>
+</ul>
+<p>授权服务和资源服务之间的交互不在标准的讨论范围中。两者可以是同一个。</p>
+<h2 id="协议流程（Protocol-Flow）"><a href="#协议流程（Protocol-Flow）" class="headerlink" title="协议流程（Protocol Flow）"></a>协议流程（Protocol Flow）</h2><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Abstract%20Protocol%20Flow" alt=""></p>
+<ul>
+<li>(A) 第三方应用向用户发起 <code>Authorization Request</code>。</li>
+<li>(B) 用户授予第三方应用一个 <code>Authorization Grant</code>，具体取决于选择哪种授权模式。</li>
+<li>(C) 第三方应用带着 <code>Authorization Grant</code> 向授权服务发起请求。</li>
+<li>(D) 授权服务认证第三方应用的身份，校验 Authorization Grant ，然后向第三方应用颁发 <code>Access Token</code>。</li>
+<li>(E) 第三方应用带着 Access Token 向资源服务发起请求。</li>
+<li>(F) 资源服务校验 Access Token 的合法性，返回受保护的资源。</li>
+</ul>
+<p>这只是一个抽象的框架定义，实际不完全是这个样子，具体的授权模式在流程上会有一些差异。</p>
+<h2 id="应用注册（Client-Registration）"><a href="#应用注册（Client-Registration）" class="headerlink" title="应用注册（Client Registration）"></a>应用注册（Client Registration）</h2><p>第三方应用首先需要在授权服务上注册自己的认证信息，注册的方式不在标准的讨论范围中。（通常情况下，是授权服务提供一个带有注册表单的终端页面；也可以是其他的方式，比如授权服务有自己的一套应用自动发现的机制）</p>
+<div class="note primary"><p><strong>强制</strong>：第三方应用向授权服务注册时必须提供以下信息：</p>
+<ul>
+<li><code>client type</code> - 应用类型</li>
+<li><code>redirection URIs</code> - 回调地址</li>
+<li>其他信息（如应用名，描述，logo等）</li>
+</ul></div>
+<h3 id="应用类型（Client-Types）"><a href="#应用类型（Client-Types）" class="headerlink" title="应用类型（Client Types）"></a>应用类型（Client Types）</h3><p>OAuth 2.0 定义了两种应用类型：</p>
+<ul>
+<li><code>confidential</code>: 可以保证自己的认证信息的安全性。</li>
+<li><code>public</code>: 无法保证自己的认证信息的安全性。</li>
+</ul>
+<p>应用类型会影响到授权服务在授权方式和安全方面的考虑。</p>
+<p>第三方应用被定义为哪种类型取决于授权服务对安全级别的定义以及他能接受的应用认证信息的安全级别。</p>
+<div class="note primary"><p><strong>强制</strong>：授权服务不应该对第三方应用的类型做任何的臆断。</p></div>
+<p>标准中主要提到了三种常见的应用：</p>
+<ul>
+<li><code>web application</code>: confidential。认证信息通常保存在服务器端，不易暴露给外界。</li>
+<li><code>user-agent-based application</code>: public。认证信息通常保存在 user-agent 上，很容易暴露。</li>
+<li><code>native application</code>: public。认证信息通常保存在应用内部（代码或配置文件中）。</li>
+</ul>
+<h3 id="应用回调地址（Redirection-URI）"><a href="#应用回调地址（Redirection-URI）" class="headerlink" title="应用回调地址（Redirection URI）"></a>应用回调地址（Redirection URI）</h3><div class="note primary"><p><strong>强制</strong>：Redirection URI 必须是绝对路径。</p></div>
+<div class="note info"><p><strong>建议</strong>：授权服务应该要求所有的 client 都注册完整格式的 Redirection URI，动态参数通过授权请求中的 “state” 参数来实现；如果有困难的话，也需要注册 URI 的 scheme、authority 和 path 部分，仅允许动态调整 query 参数。</p>
+<p>缺少 Redirection URI 的注册会导致授权请求页面变成一个 <code>open redirector</code>，进而容易被攻击。（参见后续安全性考虑）</p></div>
+<p>可以允许 client 注册多个 Redirection URI。</p>
+<div class="note warning"><p><strong>不建议</strong>：Redirection URI 请求中包含第三方 scripts。该页面中的任何第三方 scripts 都可以读取到 URI 中返回的授权信息（code 或 token）。建议在 Redirection URI 请求中首先将 URI 中返回的授权信息处理掉，然后再跳转到其他的 URI 处理业务逻辑。如果一定要包含第三方 scripts，client 必须保证自己处理 URI 中授权信息的方法优先于第三方 scripts 执行。</p></div>
+<h3 id="应用标识（Client-Identifier）"><a href="#应用标识（Client-Identifier）" class="headerlink" title="应用标识（Client Identifier）"></a>应用标识（Client Identifier）</h3><p>第三方应用注册成功后，授权服务需要授予应用一个唯一标识符 <code>client_id</code> —— 通过这个标识符可以唯一映射到第三方应用注册的其他信息。</p>
+<p>client_id 并不是密钥（client_secret），它可以暴露给外界，但不能作为身份认证时的唯一凭证。</p>
+<h3 id="应用身份认证（Client-Authentication）"><a href="#应用身份认证（Client-Authentication）" class="headerlink" title="应用身份认证（Client Authentication）"></a>应用身份认证（Client Authentication）</h3><p>身份认证即验证身份的真实性，这里主要是授权服务验证 confidential client 的身份真实性。</p>
+<div class="note primary"><p><strong>强制</strong>：授权服务也可以验证 public client 的身份，但不能依赖对它的验证结果（因为它的身份是容易暴露和伪造的）。</p></div>
+<p>通常有以下几种身份认证方式：</p>
+<h4 id="Password-client-secret"><a href="#Password-client-secret" class="headerlink" title="Password ( client_secret )"></a>Password ( client_secret )</h4><p>就是我们最经常使用的账号名和密码（clent_id 和 client_secret）。</p>
+<p>RFC 标准提供了一种 <a href="https://tools.ietf.org/html/rfc2617" target="_blank" rel="external">HTTP Basic Authentication</a> 的认证算法来对第三方应用进行 password 方式的身份认证。</p>
+<p>当授权服务提供 password 方式的身份认证时，必须支持 HTTP BA 认证。也可以支持将认证信息放入 HTTP request body 中，但不推荐这么做，必须仅限于应用本身不支持 HTTP BA 认证的情况下。</p>
+<p>进行 password 认证的通信通道必须使用 TLS 加密。</p>
+<h4 id="Assertions-RFC-7521"><a href="#Assertions-RFC-7521" class="headerlink" title="Assertions ( RFC 7521 )"></a>Assertions ( RFC 7521 )</h4><p>该方式非 OAuth 2.0 标准的内容，而是在单独的一个标准中。Assertions 认证主要是为了解决 public client 无法安全维护认证信息的问题。其认证过程概括地讲就是通过第三方可信认证机构来颁发动态证明，这里不细展开。</p>
+<h2 id="授权模式（Obtaining-Authorization）"><a href="#授权模式（Obtaining-Authorization）" class="headerlink" title="授权模式（Obtaining Authorization）"></a>授权模式（Obtaining Authorization）</h2><p>授权模式指的是第三方应用获得用户授权以及从授权服务获取授权令牌的具体方式。</p>
+<p>OAuth 2.0 标准定义了四种授权模式：</p>
+<h3 id="授权码授权模式（Authorization-Code-Grant）"><a href="#授权码授权模式（Authorization-Code-Grant）" class="headerlink" title="授权码授权模式（Authorization Code Grant）"></a>授权码授权模式（Authorization Code Grant）</h3><p>授权码是最安全的一种授权模式，应用在该模式下可以同时获得 access token 和 refresh token。该模式非常适合 confidential client 使用。</p>
+<p>下图是授权码授权的流程：<br><img src="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Authorization%20Code%20Flow.png" alt=""></p>
+<p>应用通过用户的 user-agent 与其交互。应用从用户那里得到的是一个临时的授权码，然后在应用的服务端去授权服务那里换取真正的 access token ，这样 access token 就不会暴露在用户的 user agent 中。</p>
+<h3 id="隐式授权模式（Implicit-Grant）"><a href="#隐式授权模式（Implicit-Grant）" class="headerlink" title="隐式授权模式（Implicit Grant）"></a>隐式授权模式（Implicit Grant）</h3><p>阮一峰老师的博客中把它译为“简化模式”，个人认为不管从原文还是该模式本身讲都有些不准确。“Implicit” 一词正是该模式的精髓所在，不应该被忽略。我们来看下流程图：</p>
+<p><img src="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Implicit%20Grant%20Flow.png" alt=""></p>
+<p>注意到该图和上一个模式有一个明显的区别：授权服务器向应用传递 access token 的方式是 Redirection URI with Access Token <code>in Fragment</code>。</p>
+<p>Fragment 是 URI 标准的一部分，表示一个主文档的子文档（片段）。在 HTTP 协议中，这部分内容不会被 user-agent 携带到远程访问的 URL 中，只会在 user-agent 本地起作用。</p>
+<p>当 access token 以 Fragment 的形式附加在 Redirection URI 中时，access token 只会保存在 user-agent 本地，不会暴露在不安全的网络环境中。</p>
+<div class="note primary"><p><strong>强制</strong>：该授权模式下，授权服务必须校验 Redirection URI 的合法性；并且不可以给应用返回 refresh token。</p></div>
+<h3 id="用户密码授权模式（Resource-Owner-Password-Credentials-Grant）"><a href="#用户密码授权模式（Resource-Owner-Password-Credentials-Grant）" class="headerlink" title="用户密码授权模式（Resource Owner Password Credentials Grant）"></a>用户密码授权模式（Resource Owner Password Credentials Grant）</h3><p>即传统的用户名密码模式，适用于用户比较信任客户端环境的情况（比如自己机器的操作系统等）。</p>
+<p><img src="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Resource%20Owner%20Password%20Credentials%20Flow" alt=""></p>
+<p>这种方式安全性比较低，并且用户无法控制授权的粒度，应该尽量避免或不提供这种授权方式。</p>
+<div class="note primary"><p><strong>强制</strong>：应用每次得到授权服务的授权令牌后，必须丢弃掉用户的账号密码信息（一次性）。</p></div>
+<h3 id="应用认证授权模式（Client-Credentials-Grant）"><a href="#应用认证授权模式（Client-Credentials-Grant）" class="headerlink" title="应用认证授权模式（Client Credentials Grant）"></a>应用认证授权模式（Client Credentials Grant）</h3><p>应用使用它的身份认证信息就可以直接获得授权。</p>
+<p><img src="http://abandonzhang-blog-pictures.qiniudn.com/OAuth%202.0%20-%20Client%20Credentials%20Flow" alt=""></p>
+<div class="note primary"><p><strong>强制</strong>：该授权模式必须仅向 confidential client 提供；授权服务必须验证 client 的身份；并且不可以向 client 返回 refresh token。</p></div>
+<h2 id="请求与响应"><a href="#请求与响应" class="headerlink" title="请求与响应"></a>请求与响应</h2><h3 id="Authorization-Request"><a href="#Authorization-Request" class="headerlink" title="Authorization Request"></a>Authorization Request</h3><p>在 Authorization Code Grant 或者 Implicit Grant 的授权模式中，授权服务都需要提供一个 HTTP 页面，用于用户向第三方应用授权。</p>
+<div class="note primary"><p><strong>强制</strong>：授权服务必须在该页面验证用户的身份。具体的认证方式（如 password、session cookie 等）不在本标准的讨论范围中。</p></div>
+<p>授权请求参数：</p>
+<ul>
+<li>response_type - 必须。<code>code</code> 或 <code>token</code>，分别表示 Authorization Code Grant 和 Implicit Grant。</li>
+<li>client_id - 必须。应用唯一标识。</li>
+<li>redirect_uri - 可选。（仅当 client 注册了唯一的完整回调地址时可不传）</li>
+<li>scope - 可选。</li>
+<li>state - 推荐。用来维持请求方状态的参数，无论授权成功与否，返回时都会原封不动地带上这个参数。。</li>
+</ul>
+<div class="note primary"><p><strong>强制</strong>：若请求中没有携带必须参数，或传入了不合法的值，授权服务必须向用户展示错误提示，禁止自动跳转到回调地址去。</p></div>
+<p>举例：<br><figure class="highlight perl"><table><tr><td class="code"><pre><span class="line">GET /authorize?response_type=code&amp;client_id=s6BhdRkqt3&amp;<span class="keyword">state</span>=xyz&amp;redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb HTTP/<span class="number">1.1</span></span><br><span class="line">Host: server.example.com</span><br></pre></td></tr></table></figure></p>
+<h3 id="Authorization-Response"><a href="#Authorization-Response" class="headerlink" title="Authorization Response"></a>Authorization Response</h3><p>在 Authorization Code Grant 授权模式中，授权服务向 client 返回 authorization code 的响应。</p>
+<p>正常响应参数：</p>
+<ul>
+<li>code - Authorization Code</li>
+<li>state - 如果请求参数中有，需要原封不对地返回。</li>
+</ul>
+<p>举例：<br><figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">HTTP/<span class="number">1.1</span> <span class="number">302</span> Found</span><br><span class="line">Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&amp;<span class="keyword">state</span>=xyz</span><br></pre></td></tr></table></figure></p>
+<p>错误响应参数：</p>
+<ul>
+<li>error - 必须。错误码</li>
+<li>error_description - 可选。错误描述</li>
+<li>error_uri - 可选。</li>
+<li>state - 如果请求参数中有，需要原封不对地返回。</li>
+</ul>
+<p>举例：<br><figure class="highlight http"><table><tr><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">302</span> Found</span><br><span class="line"><span class="attribute">Location</span>: https://client.example.com/cb?error=access_denied&amp;state=xyz</span><br></pre></td></tr></table></figure></p>
+<h3 id="Access-Token-Request"><a href="#Access-Token-Request" class="headerlink" title="Access Token Request"></a>Access Token Request</h3><p>在 Authorization Code Grant 授权模式中，client 调用 Access Token Request 用 authorization code 换取 access token。</p>
+<p>而在 Resource Owner Password Credentials Grant 或者 Client Credentials Grant 的授权模式中，client 都是直接调用 Access Token Request 来获取 Access Token，无需用户授权。</p>
+<p>client 发起请求时，授权服务必须验证 client 的身份。client 身份用于：</p>
+<ul>
+<li>强制校验 refresh_token 或 authorization code 绑定的 client</li>
+<li>便于单方面收回某个已经不安全的 client 的权限</li>
+<li>便于周期性的更新 client 认证信息，有效防止 client 认证信息被盗取</li>
+</ul>
+<p>请求参数（Authorization Code Grant）：</p>
+<ul>
+<li>grant_type - 必须。值为<code>authorization_code</code>。</li>
+<li>code -</li>
+<li>redirect_uri -</li>
+<li>client_id - 如果授权服务没有验证 client 的身份，则该项必填。</li>
+<li>scope - 请求的资源范围</li>
+</ul>
+<p>请求参数（Resource Owner Password Credentials Grant）：</p>
+<ul>
+<li>grant_type - 必须。值为<code>password</code>。</li>
+<li>username -</li>
+<li>password -</li>
+<li>scope - 请求的资源范围</li>
+</ul>
+<p>请求参数（Client Credentials Grant）（身份认证信息在 HTTP BA 认证 header 中）：</p>
+<ul>
+<li>grant_type - 必须。值为<code>client_credentials</code>。</li>
+<li>scope - 请求的资源范围</li>
+</ul>
+<p>举例：<br><figure class="highlight http"><table><tr><td class="code"><pre><span class="line"><span class="keyword">POST</span> <span class="string">/token</span> HTTP/1.1</span><br><span class="line"><span class="attribute">Host</span>: server.example.com</span><br><span class="line"><span class="attribute">Authorization</span>: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW （第三方应用身份认证）</span><br><span class="line"><span class="attribute">Content-Type</span>: application/x-www-form-urlencoded</span><br><span class="line"></span><br><span class="line"><span class="apache"><span class="attribute">grant_type</span>=authorization_code&amp;code=SplxlOBeZQQYbYS6WxSbIA&amp;redirect_uri=https<span class="number">%3</span>A<span class="number">%2</span>F<span class="number">%2</span>Fclient<span class="number">%2</span>Eexample<span class="number">%2</span>Ecom<span class="number">%2</span>Fcb</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="Access-Token-Response"><a href="#Access-Token-Response" class="headerlink" title="Access Token Response"></a>Access Token Response</h3><p>四种授权模式中，授权服务向 client 返回 access token 的响应。</p>
+<p>响应参数：</p>
+<ul>
+<li>access_token - access token</li>
+<li>token_type - access token 类型</li>
+<li>expires_in - access token 的过期时间</li>
+<li>refresh_token - （仅在 Authorization Code Grant 和 Resource Owner Password Credentials Grant 模式下支持）</li>
+<li>scope - access token 实际的范围（可能与请求范围不同）</li>
+<li>state - （仅用于 Implicit Grant 授权模式，对应 Authorization Request 的参数）</li>
+</ul>
+<p>举例：<br><figure class="highlight http"><table><tr><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">200</span> OK</span><br><span class="line"><span class="attribute">Content-Type</span>: application/json;charset=UTF-8</span><br><span class="line"><span class="attribute">Cache-Control</span>: no-store</span><br><span class="line"><span class="attribute">Pragma</span>: no-cache</span><br><span class="line"></span><br><span class="line"><span class="json">&#123;</span><br><span class="line">    <span class="attr">"access_token"</span>:<span class="string">"2YotnFZFEjr1zCsicMWpAA"</span>,</span><br><span class="line">    <span class="attr">"token_type"</span>:<span class="string">"example"</span>,</span><br><span class="line">    <span class="attr">"expires_in"</span>:<span class="number">3600</span>,</span><br><span class="line">    <span class="attr">"refresh_token"</span>:<span class="string">"tGzv3JOkF0XG5Qx2TlKWIA"</span>,</span><br><span class="line">    <span class="attr">"scope"</span>:<span class="string">"example_value"</span></span><br><span class="line">&#125;</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="Access-Token"><a href="#Access-Token" class="headerlink" title="Access Token"></a>Access Token</h2><p>标准中并没有规定 access token 的数据结构和算法。</p>
+<h3 id="有效范围（Scope）"><a href="#有效范围（Scope）" class="headerlink" title="有效范围（Scope）"></a>有效范围（Scope）</h3><p>OAuth 2.0 标准只规定了 scope 的语法，并没有说明如何使用它。<br><figure class="highlight d"><table><tr><td class="code"><pre><span class="line"><span class="comment">// OAuth 2.0 使用 ABNF 范式来定义语法</span></span><br><span class="line"><span class="comment">// *() 指出现0次或多次</span></span><br><span class="line"><span class="keyword">scope</span>       = <span class="keyword">scope</span>-token *( SP <span class="keyword">scope</span>-token )</span><br><span class="line"><span class="comment">// 1*() 指出现1次或多次</span></span><br><span class="line"><span class="keyword">scope</span>-token = <span class="number">1</span>*( %x21 / %x23-<span class="number">5</span>B / %x5D-<span class="number">7</span>E )</span><br></pre></td></tr></table></figure></p>
+<h3 id="类型（Types）"><a href="#类型（Types）" class="headerlink" title="类型（Types）"></a>类型（Types）</h3><p>OAuth 2.0 标准中只介绍了两种 Access Token 类型：</p>
+<ul>
+<li>“bearer” token - <a href="https://tools.ietf.org/html/rfc6750" target="_blank" rel="external">RFC6750</a></li>
+<li>“mac” token - [OAuth-HTTP-MAC] HTTP Authentication: MAC Access Authentication</li>
+</ul>
+<h2 id="Refresh-Token"><a href="#Refresh-Token" class="headerlink" title="Refresh Token"></a>Refresh Token</h2><p>通常 refresh token 是一个长时间有效（相比较 access token 的有效期）的凭证，应用可以使用 refresh token 来换取一个新的 access token（即使原 access token 已过期）。</p>
+<p>授权服务刷新 access token 前的校验步骤：</p>
+<ol>
+<li>验证 client 的身份</li>
+<li>验证 refresh token 与 client 的绑定关系</li>
+<li>验证 refresh token 的合法性</li>
+</ol>
+<div class="note primary"><p><strong>强制</strong>：刷新 access token 时，授权服务也可以返回新的 refresh token。在这种情况下，client 必须丢弃掉旧的 refresh token；且新的 refresh token 的 scope 必须与原 refresh token 保持一致。</p></div>
+<div class="note info"><p><strong>推荐</strong>：安全起见，refresh token 需要与 client 绑定。并且授权服务需要验证 client 的身份。</p></div>
+<div class="note info"><p><strong>推荐</strong>：当授权服务返回一个新的 refresh token 时，可以选择将旧 token 置为失效。</p></div>
+<h2 id="访问资源"><a href="#访问资源" class="headerlink" title="访问资源"></a>访问资源</h2><p>资源服务响应资源访问请求前的校验步骤：</p>
+<ol>
+<li>校验 access token 的合法性</li>
+<li>校验 access token 是否过期</li>
+<li>校验 access token 的 scope 范围是否包括该资源。</li>
+</ol>
+<p>资源服务校验 access token 的方式不在标准的讨论范围中。</p>
+<h2 id="安全性考虑（Security-Considerations）"><a href="#安全性考虑（Security-Considerations）" class="headerlink" title="安全性考虑（Security Considerations）"></a>安全性考虑（Security Considerations）</h2><p>标准中列出了一些实现 OAuth 2.0 时需要注意的安全问题。更全面的安全模型和分析，包括协议涉及的背景，在另一篇标准 RFC 6819 中。</p>
+<h3 id="应用身份认证和伪造"><a href="#应用身份认证和伪造" class="headerlink" title="应用身份认证和伪造"></a>应用身份认证和伪造</h3><div class="note danger"><p><strong>禁止</strong>：授权服务禁止向 public client 颁发 client password 做身份认证。</p></div>
+<div class="note info"><p><strong>推荐</strong>：当授权服务无法验证 client 的认证时，应该使用其他方式验证 client 的授权请求。比如验证 Redirection URI，或者让用户来协助判断 client 的身份。</p>
+<p>验证 Redirection URI 对验证 client 身份实际上没有什么帮助，但它可以防止授权凭证被携带给陌生的 client。</p></div>
+<div class="note info"><p><strong>推荐</strong>：授权服务应该向用户提供 client 的信息（如应用名称、logo等）、client 想申请的授权范围（scope），以及授权的有效时间；用户根据这些信息来决定是否授予 client 权限。</p></div>
+<div class="note warning"><p><strong>不推荐</strong>：授权服务不应该未经用户交互或 client 的身份认证就自动处理授权请求。</p></div>
+<h3 id="Access-Token-安全"><a href="#Access-Token-安全" class="headerlink" title="Access Token 安全"></a>Access Token 安全</h3><div class="note primary"><p><strong>强制</strong>：access token 只能在授权服务、资源服务和对应的 client 之间传输和存储，且传输通道必须使用 TLS。</p></div>
+<p>当使用 Implicit Grant Type 时，access token 在 URI 的 Fragment 中传输，可以避免暴露给未授权的第三方（如不可信网络或运营商）。</p>
+<div class="note primary"><p><strong>强制</strong>：授权服务必须保证 access token 无法被未授权的第三方伪造或篡改。</p></div>
+<h3 id="Refresh-Token-安全"><a href="#Refresh-Token-安全" class="headerlink" title="Refresh Token 安全"></a>Refresh Token 安全</h3><div class="note primary"><p><strong>强制</strong>：refresh token 只能在授权服务和对应的 client 之间传输和存储，且传输通道必须使用 TLS。授权服务必须维护和验证 refresh token 和 client 的绑定关系。</p></div>
+<div class="note primary"><p><strong>强制</strong>：授权服务必须保证 refresh token 无法被未授权的第三方伪造或篡改。</p></div>
+<h3 id="Authorization-Code-安全"><a href="#Authorization-Code-安全" class="headerlink" title="Authorization Code 安全"></a>Authorization Code 安全</h3><div class="note primary"><p><strong>强制</strong>：authorization code 的传输通道必须使用 TLS。</p></div>
+<div class="note primary"><p><strong>强制</strong>：authorization code 的有效期必须是短暂的，且只能使用一次。</p></div>
+<div class="note info"><p><strong>推荐</strong>：如果授权服务发现同一个 authorization code 多次尝试请求 access token，应该把之前该 authorization code 换取的 access token 置为失效。</p></div>
+<h3 id="Redirection-URI-篡改攻击"><a href="#Redirection-URI-篡改攻击" class="headerlink" title="Redirection URI 篡改攻击"></a>Redirection URI 篡改攻击</h3><p>假如现在有一个正常授权请求：</p>
+<figure class="highlight http"><table><tr><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/authorize?response_type=code&amp;client_id=s6BhdRkqt3&amp;redirect_uri=https://client.normal.com</span> HTTP/1.1</span><br><span class="line"><span class="attribute">Host</span>: server.example.com</span><br></pre></td></tr></table></figure>
+<p>现在攻击者篡改其中的 redirect_uri，变成下面的请求：</p>
+<figure class="highlight http"><table><tr><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/authorize?response_type=code&amp;client_id=s6BhdRkqt3&amp;redirect_uri=https://client.attack.com</span> HTTP/1.1</span><br><span class="line"><span class="attribute">Host</span>: server.example.com</span><br></pre></td></tr></table></figure>
+<p>然后攻击者把这个 URL 提供给用户。用户如果没注意，同意了授权的话，则攻击者（<a href="https://client.attack.com）就会收到" target="_blank" rel="external">https://client.attack.com）就会收到</a> authorization code。</p>
+<p>然后攻击者带着这个 authorization code 访问正常 client 的 redirect_uri。一般情况下，client 会拿着 authorization code 向授权服务换取 access token。这样攻击者就可以拿到用户的 authorization code 了。</p>
+<p>（为什么攻击者不能直接拿 authorization code 换 access token 呢？—— 因为 access token request 带有 client 身份认证，如 HTTP BA认证 ）</p>
+<div class="note primary"><p><strong>强制</strong>：授权服务需要校验请求 authorization code 的 Redirection URI 与该 authorization code 请求 access token 时的 Redirection URI 是否一致。</p></div>
+<div class="note primary"><p><strong>强制</strong>：授权服务必须要求 public client 在注册时提供 Redirection URIs，confidential client 可选但有则更好。授权服务必须校验每个请求（包括 Authorization Request 和 Access Token Request）中 redirect_uri。</p></div>
+<h3 id="中间人攻击"><a href="#中间人攻击" class="headerlink" title="中间人攻击"></a>中间人攻击</h3><div class="note primary"><p><strong>强制</strong>：为了避免中间人攻击，授权服务提供的 API 或者页面都必须使用 TLS。client 必须校验授权服务的 TLS 证书。</p></div>
+<h3 id="穷举攻击"><a href="#穷举攻击" class="headerlink" title="穷举攻击"></a>穷举攻击</h3><div class="note primary"><p><strong>强制</strong>：授权服务必须保证 access token, refresh token, authorization code, 用户密码, 应用的身份信息不能被穷举攻击。其被攻击到的概率<strong>必须</strong>小于 2^(-128)，<strong>推荐</strong>小于2^(-160)。</p></div>
+<h3 id="CSRF-攻击"><a href="#CSRF-攻击" class="headerlink" title="CSRF 攻击"></a>CSRF 攻击</h3><h4 id="on-Redirection-URI"><a href="#on-Redirection-URI" class="headerlink" title="on Redirection URI"></a>on Redirection URI</h4><p>攻击者可以利用 CSRF 攻击，在正常用户的 user agent 上请求 client 的 Redirection URI ，并带上自己的 authorization code 或者 access token 。这样正常用户之前的授权状态就会被覆盖，在不知情的情况下，做一些危险的操作（如转账、设置管理员权限等）。</p>
+<div class="note primary"><p><strong>强制</strong>：client 的 Redirection URI 必须能够防止 CSRF 攻击；推荐 client 在发起授权请求时使用 OAuth 2.0 中的 state 参数。</p></div>
+<h4 id="on-Authorization-Request"><a href="#on-Authorization-Request" class="headerlink" title="on Authorization Request"></a>on Authorization Request</h4><p>通常，授权服务的 Authorization Request 是一个用户交互页面。如果该页面提交授权的请求没有防 CSRF，那么攻击者就可以在用户不知情的情况下（构造表单自动提交）让用户授权给一个恶意的 client 或者 Redirection URI。</p>
+<div class="note primary"><p><strong>强制</strong>：授权服务提供的授权页面必须能够防止 CSRF 攻击，并且对于无法确认身份的 client（如 public client）需要在交互页面提醒用户。</p></div>
+<h3 id="点击劫持攻击"><a href="#点击劫持攻击" class="headerlink" title="点击劫持攻击"></a>点击劫持攻击</h3><p>攻击者可以实现一个伪造的页面（如钓鱼网站），在页面之下隐藏着一个授权服务提供的授权页面（设置用户不可见，但按钮可以点击）。用户可能在不知情的情况下，授权给某个无法确认身份的恶意 client。</p>
+<div class="note primary"><p><strong>强制</strong>：授权服务提供的授权页面必须能够防止点击劫持攻击。</p></div>
+<h3 id="代码注入攻击"><a href="#代码注入攻击" class="headerlink" title="代码注入攻击"></a>代码注入攻击</h3><div class="note primary"><p><strong>强制</strong>：授权服务和 client 必须忽略任何标准中（或双方的对接文档中）未提到的参数；并且需要校验每一个有效参数的合法性。</p></div>
+<h3 id="Open-Redirector"><a href="#Open-Redirector" class="headerlink" title="Open Redirector"></a>Open Redirector</h3><p><code>Open Redirectors</code> 表示一类 HTTP 请求，它接受一个 redirect_uri，或者 continue 之类的参数，没有经过验证（或仅验证了部分），然后 location 到 redirect uri 中。</p>
+<p>Open Redirectors 很容易导致攻击者伪造一个自己可以控制的 URI，然后获取到授权信息。</p>
+<p>前面提到过，client 在向授权服务注册时，Redirection URI 部分是有限制的，就是为了防止这个。</p>
+<h2 id="移动应用（Native-Applications）"><a href="#移动应用（Native-Applications）" class="headerlink" title="移动应用（Native Applications）"></a>移动应用（Native Applications）</h2><p>（待补充）</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ol>
+<li><a href="https://oauth.net/2/" target="_blank" rel="external">OAuth 2.0 主页</a></li>
+<li><a href="https://tools.ietf.org/html/rfc6749" target="_blank" rel="external">RFC 6749 - The OAuth 2.0 Authorization Framework</a></li>
+<li><a href="https://tools.ietf.org/html/rfc6819" target="_blank" rel="external">RFC 6819 - OAuth 2.0 Threat Model and Security Considerations</a></li>
+<li><a href="https://tools.ietf.org/html/rfc7521" target="_blank" rel="external">RFC 7521 - Assertion Framework for OAuth 2.0 Client Authentication and<br>Authorization Grants</a></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    AbandonZHANG
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.abandonzhang.me/2017/11/12/OAuth-2-0-Authorization-Framework/" title="The OAuth 2.0 Authorization Framework 学习笔记">http://blog.abandonzhang.me/2017/11/12/OAuth-2-0-Authorization-Framework/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/05/Java-Collections-Framework/" rel="next" title="Java Collections Framework">
+                <i class="fa fa-chevron-left"></i> Java Collections Framework
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/04/JVM-Args-Recommend/" rel="prev" title="JVM 参数">
+                JVM 参数 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="AbandonZHANG" />
+            
+              <p class="site-author-name" itemprop="name">AbandonZHANG</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#角色（Roles）"><span class="nav-number">1.</span> <span class="nav-text">角色（Roles）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#协议流程（Protocol-Flow）"><span class="nav-number">2.</span> <span class="nav-text">协议流程（Protocol Flow）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用注册（Client-Registration）"><span class="nav-number">3.</span> <span class="nav-text">应用注册（Client Registration）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#应用类型（Client-Types）"><span class="nav-number">3.1.</span> <span class="nav-text">应用类型（Client Types）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用回调地址（Redirection-URI）"><span class="nav-number">3.2.</span> <span class="nav-text">应用回调地址（Redirection URI）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用标识（Client-Identifier）"><span class="nav-number">3.3.</span> <span class="nav-text">应用标识（Client Identifier）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用身份认证（Client-Authentication）"><span class="nav-number">3.4.</span> <span class="nav-text">应用身份认证（Client Authentication）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Password-client-secret"><span class="nav-number">3.4.1.</span> <span class="nav-text">Password ( client_secret )</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Assertions-RFC-7521"><span class="nav-number">3.4.2.</span> <span class="nav-text">Assertions ( RFC 7521 )</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#授权模式（Obtaining-Authorization）"><span class="nav-number">4.</span> <span class="nav-text">授权模式（Obtaining Authorization）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#授权码授权模式（Authorization-Code-Grant）"><span class="nav-number">4.1.</span> <span class="nav-text">授权码授权模式（Authorization Code Grant）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#隐式授权模式（Implicit-Grant）"><span class="nav-number">4.2.</span> <span class="nav-text">隐式授权模式（Implicit Grant）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用户密码授权模式（Resource-Owner-Password-Credentials-Grant）"><span class="nav-number">4.3.</span> <span class="nav-text">用户密码授权模式（Resource Owner Password Credentials Grant）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用认证授权模式（Client-Credentials-Grant）"><span class="nav-number">4.4.</span> <span class="nav-text">应用认证授权模式（Client Credentials Grant）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#请求与响应"><span class="nav-number">5.</span> <span class="nav-text">请求与响应</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Authorization-Request"><span class="nav-number">5.1.</span> <span class="nav-text">Authorization Request</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Authorization-Response"><span class="nav-number">5.2.</span> <span class="nav-text">Authorization Response</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Access-Token-Request"><span class="nav-number">5.3.</span> <span class="nav-text">Access Token Request</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Access-Token-Response"><span class="nav-number">5.4.</span> <span class="nav-text">Access Token Response</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Access-Token"><span class="nav-number">6.</span> <span class="nav-text">Access Token</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#有效范围（Scope）"><span class="nav-number">6.1.</span> <span class="nav-text">有效范围（Scope）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#类型（Types）"><span class="nav-number">6.2.</span> <span class="nav-text">类型（Types）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Refresh-Token"><span class="nav-number">7.</span> <span class="nav-text">Refresh Token</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#访问资源"><span class="nav-number">8.</span> <span class="nav-text">访问资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安全性考虑（Security-Considerations）"><span class="nav-number">9.</span> <span class="nav-text">安全性考虑（Security Considerations）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#应用身份认证和伪造"><span class="nav-number">9.1.</span> <span class="nav-text">应用身份认证和伪造</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Access-Token-安全"><span class="nav-number">9.2.</span> <span class="nav-text">Access Token 安全</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Refresh-Token-安全"><span class="nav-number">9.3.</span> <span class="nav-text">Refresh Token 安全</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Authorization-Code-安全"><span class="nav-number">9.4.</span> <span class="nav-text">Authorization Code 安全</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redirection-URI-篡改攻击"><span class="nav-number">9.5.</span> <span class="nav-text">Redirection URI 篡改攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#中间人攻击"><span class="nav-number">9.6.</span> <span class="nav-text">中间人攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#穷举攻击"><span class="nav-number">9.7.</span> <span class="nav-text">穷举攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CSRF-攻击"><span class="nav-number">9.8.</span> <span class="nav-text">CSRF 攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#on-Redirection-URI"><span class="nav-number">9.8.1.</span> <span class="nav-text">on Redirection URI</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#on-Authorization-Request"><span class="nav-number">9.8.2.</span> <span class="nav-text">on Authorization Request</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#点击劫持攻击"><span class="nav-number">9.9.</span> <span class="nav-text">点击劫持攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码注入攻击"><span class="nav-number">9.10.</span> <span class="nav-text">代码注入攻击</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Open-Redirector"><span class="nav-number">9.11.</span> <span class="nav-text">Open Redirector</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#移动应用（Native-Applications）"><span class="nav-number">10.</span> <span class="nav-text">移动应用（Native Applications）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文献"><span class="nav-number">11.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">AbandonZHANG ♥ clytze</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.1"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+
+<!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+</body>
+</html>

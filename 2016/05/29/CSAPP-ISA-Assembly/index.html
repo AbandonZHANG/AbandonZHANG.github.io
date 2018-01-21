@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.1" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.1" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+
+  
+  <meta name="keywords" content="计算机系统结构," />
+
+
+<meta name="description" content="CSAPP &amp;amp;&amp;amp; CMU 15-213 Intro to Computer Systems 学习笔记（一）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解计算机系统：指令集架构、汇编语言与高级程序语言特性">
+<meta property="og:url" content="http://blog.abandonzhang.me/2016/05/29/CSAPP-ISA-Assembly/index.html">
+<meta property="og:site_name" content="蝸牛">
+<meta property="og:description" content="CSAPP &amp;amp;&amp;amp; CMU 15-213 Intro to Computer Systems 学习笔记（一）。">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/CSAPP_ISAE91427A6-77A9-4BE9-8CD3-D1112170827B.png">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/CSAPP_ISA14498EF0-8DE8-41E0-B4D8-961A725FE4C8.png">
+<meta property="og:updated_time" content="2018-01-21T10:25:58.642Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入理解计算机系统：指令集架构、汇编语言与高级程序语言特性">
+<meta name="twitter:description" content="CSAPP &amp;amp;&amp;amp; CMU 15-213 Intro to Computer Systems 学习笔记（一）。">
+<meta name="twitter:image" content="http://abandonzhang-blog-pictures.qiniudn.com/CSAPP_ISAE91427A6-77A9-4BE9-8CD3-D1112170827B.png">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="蝸牛" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://blog.abandonzhang.me/2016/05/29/CSAPP-ISA-Assembly/"/>
+
+
+  <title>深入理解计算机系统：指令集架构、汇编语言与高级程序语言特性 | 蝸牛</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蝸牛</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">小小的天有大大的夢想</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2016/05/29/CSAPP-ISA-Assembly/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="AbandonZHANG">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蝸牛">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深入理解计算机系统：指令集架构、汇编语言与高级程序语言特性</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-29T19:01:57+08:00">May 29, 2016</time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>CSAPP &amp;&amp; CMU 15-213 <a href="http://www.cs.cmu.edu/afs/cs/academic/class/15213-m15/www/" target="_blank" rel="external">Intro to Computer Systems</a> 学习笔记（一）。</p>
+<a id="more"></a>
+<hr>
+<h2 id="什么是计算机"><a href="#什么是计算机" class="headerlink" title="什么是计算机"></a>什么是计算机</h2><p>计算机本质上就是一个可以接受输入数据，执行特定指令，然后输出结果的电子设备。</p>
+<h3 id="信息的传输"><a href="#信息的传输" class="headerlink" title="信息的传输"></a>信息的传输</h3><p>目前广泛应用的计算机都还是电子计算机，利用数字电路传输和存储信息[1]。考虑到电子器件间通过电路传递信息的可靠性和稳定性，计算机中的信息都是以二进制的形式存在的，低电压是0，高电压是1。一个0或1就叫一个<code>Bit</code>，类似现实世界中的原子，构成计算机中的万物。</p>
+<h3 id="输入输出设备"><a href="#输入输出设备" class="headerlink" title="输入输出设备"></a>输入输出设备</h3><p>早期的输入输出（Input Output，IO）设备就是穿孔纸带，带孔为1，无孔为0。工程师们将纸带打好洞传给计算机的卡片阅读器，然后计算机输出的时候则用打卡器将纸带打好洞传给工程师。后来就有了各种各样的IO设备，键盘、鼠标、显示器、耳机等……</p>
+<p>每一种设备与计算机之间都需要一个<code>驱动程序</code>，负责当设备和计算机之间的“翻译”。比如上面提到的卡片阅读器和打卡器，就是纸带的驱动程序。卡片阅读器把纸带的打孔状态翻译成计算机能够理解的二进制电流，打卡器相反把计算机的电流反映到纸带的打孔状态上。</p>
+<h3 id="计算机系统结构"><a href="#计算机系统结构" class="headerlink" title="计算机系统结构"></a>计算机系统结构</h3><p>有了数据和输入输出设备，计算机内部又是怎么把他们串起来变成一个系统的呢，指令、计算又是如何执行的呢？</p>
+<p>计算机软硬件中间层各个部分的功能、组织和实现的设计被称为<code>计算机系统结构</code>（Computer Architecture），主要包括：指令集架构、微架构和实现。</p>
+<p>以常见的冯·诺伊曼结构的设计为例：<br><img src="http://abandonzhang-blog-pictures.qiniudn.com/CSAPP_ISAE91427A6-77A9-4BE9-8CD3-D1112170827B.png" alt=""><br>计算机大致由这几部分组成：处理器（Processer）、内存（Memory）、IO设备、总线（Bus）。其中，处理器是集中央控制和计算功能于一身的最重要的部分，总线则负责处理器与内存、IO设备之间的通信。</p>
+<p>与另一个著名的哈佛结构的计算机相比，冯·诺依曼结构的计算机将指令和数据放在一起，程序执行时会把它们从IO设备读取到一个内存区域中。</p>
+<p>计算机系统结构的设计主要就是处理器的设计。</p>
+<h4 id="指令集架构"><a href="#指令集架构" class="headerlink" title="指令集架构"></a>指令集架构</h4><p>处理器可执行的指令集是预先设定好的。设计时除了要考虑要实现哪些计算，还要考虑指令格式、占位，数据存在哪里、怎么存（寄存器、内存），如何获取数据（寻址方式）等，这些方面合在一起就是<code>指令集架构</code>（Instruction Set Architecture）的设计。</p>
+<p>传统的指令集架构设计被称为<code>复杂指令集计算机</code>（Complex Instruction Set Computer）。那时候硬件水平比较低，内存容量小，大家都尽量让程序的指令数少一点，写程序也简单一点，同时也为了一些计算的性能提升，不断把一些复杂的计算用硬件实现成一条指令加入到指令集中。但这样又带来了其他问题：指令集越来越庞大，指令长度不统一、解析速度慢，指令周期不一致、难以流水线化（pipeline），硬件成本提高。代表有Intel的IA32和Intel®64（又名x86-64、x64，实际上x64是AMD先推出的，所以也有AMD64）。</p>
+<p>1980年出现了一种新的指令集体系的设计理念<code>精简指令集计算机</code>（Reduced Instruction Set Computer），基于80%的功能都是由20%的指令完成的“二八原则”，对指令集做了精简：统一的指令长度和指令周期，便于指令的流水线化；处理器实现更加简单，成本和功耗更低。目前广泛应用于智能手机的ARM处理器就是RISC架构，另外比较有名的还有MIPS。实际上Intel的x86处理器也借鉴了RISC的思想，指令在进入流水线前会被分解成微指令来执行。</p>
+<p>为什么Intel没有从CISC转投RISC呢？这其实是一场商业与技术博弈的结果[2]：为了每代处理器的向前兼容性，Intel是无法完全抛弃CISC的。实际上当时Intel是有另一个项目组在搞RISC处理器的，只是搞出来之后无法被市场所接受（因为之前的软件无法在新处理器上运行）。这也提醒我们搞技术的同学，不要总是单纯以技术的眼光来看待问题。</p>
+<p>HPCA13的一篇论文[3]分析得出了ISA的选择对现代处理器性能和功耗的影响是无关紧要的，影响更多的是处理器的制造工艺和微架构。</p>
+<h4 id="微架构"><a href="#微架构" class="headerlink" title="微架构"></a>微架构</h4><p>指令集架构决定了处理器的架构和设计，而<code>微架构</code>（Microarchitecture）则决定了处理器如何实现指令集架构。这个实现不是指的硬件上的实现，而是更细分的逻辑部件和各部件之间如何沟通合作的设计，这里不再展开。Intel处理器的微架构有：Sandy Bridge、Ivy Bridge、Haswell、Skylake等。</p>
+<h2 id="汇编语言"><a href="#汇编语言" class="headerlink" title="汇编语言"></a>汇编语言</h2><p><code>汇编语言</code>（Assembly Language）就是将01形式的机器指令“翻译”成了我们方便阅读的英文符号。<code>汇编器</code>（Assembler）可以将我们写的汇编语言程序转换成机器指令。</p>
+<p>两大公司Intel和AT&amp;T开发的汇编器分别被Windows系统和Unix/Linux系统广泛应用，造就了目前最常用的两种汇编语法。当然两种汇编在语法上只有细微的差别，不需要重复学习。</p>
+<p>下面我们就以AT&amp;T汇编为例来学习Intel的的IA32指令集架构[4]。</p>
+<h3 id="IA32处理器结构"><a href="#IA32处理器结构" class="headerlink" title="IA32处理器结构"></a>IA32处理器结构</h3><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/CSAPP_ISA14498EF0-8DE8-41E0-B4D8-961A725FE4C8.png" alt=""><br>如图所示，IA32的处理器的部件包括：控制单元、执行单元（算数逻辑单元）、寄存器和标记位（这方面x86也一样）。各个部分的延伸可以去看[4]，这里不再展开。</p>
+<h2 id="推荐资料"><a href="#推荐资料" class="headerlink" title="推荐资料"></a>推荐资料</h2><ol>
+<li>《编码：隐匿在计算机软硬件背后的语言》</li>
+<li>《浪潮之巅》</li>
+<li><em>Power Struggles: Revisiting the RISC vs. CISC Debate on Contemporary ARM and x86 Architectures</em></li>
+<li><em>Professional Assembly Language</em></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    AbandonZHANG
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.abandonzhang.me/2016/05/29/CSAPP-ISA-Assembly/" title="深入理解计算机系统：指令集架构、汇编语言与高级程序语言特性">http://blog.abandonzhang.me/2016/05/29/CSAPP-ISA-Assembly/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/计算机系统结构/" rel="tag"># 计算机系统结构</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/05/08/KeePassX/" rel="next" title="密码管理软件推荐">
+                <i class="fa fa-chevron-left"></i> 密码管理软件推荐
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/10/29/InnoDB-Src-Storage/" rel="prev" title="InnoDB 存储引擎源码学习 —— 存储管理">
+                InnoDB 存储引擎源码学习 —— 存储管理 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="AbandonZHANG" />
+            
+              <p class="site-author-name" itemprop="name">AbandonZHANG</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是计算机"><span class="nav-number">1.</span> <span class="nav-text">什么是计算机</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#信息的传输"><span class="nav-number">1.1.</span> <span class="nav-text">信息的传输</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#输入输出设备"><span class="nav-number">1.2.</span> <span class="nav-text">输入输出设备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#计算机系统结构"><span class="nav-number">1.3.</span> <span class="nav-text">计算机系统结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#指令集架构"><span class="nav-number">1.3.1.</span> <span class="nav-text">指令集架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#微架构"><span class="nav-number">1.3.2.</span> <span class="nav-text">微架构</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#汇编语言"><span class="nav-number">2.</span> <span class="nav-text">汇编语言</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IA32处理器结构"><span class="nav-number">2.1.</span> <span class="nav-text">IA32处理器结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#推荐资料"><span class="nav-number">3.</span> <span class="nav-text">推荐资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">AbandonZHANG ♥ clytze</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.1"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+
+<!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+</body>
+</html>

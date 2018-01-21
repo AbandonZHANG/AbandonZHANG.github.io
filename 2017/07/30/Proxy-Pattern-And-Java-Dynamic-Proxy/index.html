@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.1" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.1" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+
+  
+  <meta name="keywords" content="Java,设计模式," />
+
+
+<meta name="description" content="要弄清楚动态代理，首先需要明白什么是代理，以及什么是静态代理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="代理模式和 Java 动态代理">
+<meta property="og:url" content="http://blog.abandonzhang.me/2017/07/30/Proxy-Pattern-And-Java-Dynamic-Proxy/index.html">
+<meta property="og:site_name" content="蝸牛">
+<meta property="og:description" content="要弄清楚动态代理，首先需要明白什么是代理，以及什么是静态代理。">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%B1%BB%E5%9B%BE">
+<meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/JDK%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86UML%E5%9B%BE">
+<meta property="og:updated_time" content="2018-01-21T10:14:19.676Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="代理模式和 Java 动态代理">
+<meta name="twitter:description" content="要弄清楚动态代理，首先需要明白什么是代理，以及什么是静态代理。">
+<meta name="twitter:image" content="http://abandonzhang-blog-pictures.qiniudn.com/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%B1%BB%E5%9B%BE">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="蝸牛" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://blog.abandonzhang.me/2017/07/30/Proxy-Pattern-And-Java-Dynamic-Proxy/"/>
+
+
+  <title>代理模式和 Java 动态代理 | 蝸牛</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蝸牛</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">小小的天有大大的夢想</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2017/07/30/Proxy-Pattern-And-Java-Dynamic-Proxy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="AbandonZHANG">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蝸牛">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">代理模式和 Java 动态代理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-30T14:53:26+08:00">Jul 30, 2017</time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>要弄清楚动态代理，首先需要明白什么是代理，以及什么是静态代理。</p>
+<a id="more"></a>
+<h2 id="代理模式"><a href="#代理模式" class="headerlink" title="代理模式"></a>代理模式</h2><p>代理是间接访问目标对象的一种模式。</p>
+<p>代理有什么好处呢？</p>
+<ul>
+<li>对调用方而言，代理可以屏蔽掉目标对象的构造和与之通信的具体实现细节，仅关注自己需要关注的部分（如配置、输入参数、输出结果等）</li>
+<li>对目标对象而言，代理可以帮助目标对象做一些权限控制、日志统计等</li>
+</ul>
+<h3 id="UML-类图"><a href="#UML-类图" class="headerlink" title="UML 类图"></a>UML 类图</h3><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F%E7%B1%BB%E5%9B%BE" alt=""></p>
+<p>在代理模式中有三种角色：</p>
+<ul>
+<li>Subject：目标类的接口（或抽象类）</li>
+<li>RealSubject：目标类</li>
+<li>Proxy：代理类</li>
+</ul>
+<p>在面向接口编程中，Proxy 实现了 Subject 接口，使其对于 Client 而言与 RealSubject 是一样的，Proxy 类中会保存真正的目标对象 realSubject ，然后在它的构造函数中封装 realSubject 的构造细节，在它的方法中封装 realSubject 的方法细节。</p>
+<h2 id="静态代理"><a href="#静态代理" class="headerlink" title="静态代理"></a>静态代理</h2><p>静态代理实际就是按照代理模式把各角色类事先（编译前）都定义好。如下代码：</p>
+<p>Subject<br><figure class="highlight cs"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title">Subject</span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">request</span>(<span class="params"></span>)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>RealSubject<br><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">RealSubject</span> <span class="keyword">implements</span> <span class="title">Subject</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"This is RealSubject request"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Proxy<br><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Proxy</span> <span class="keyword">implements</span> <span class="title">Subject</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> RealSubject realSubject;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Proxy <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 隐藏 RealSubject 的构造细节</span></span><br><span class="line">        Proxy proxy = <span class="keyword">new</span> Proxy();</span><br><span class="line">        RealSubject realSubject = <span class="keyword">new</span> RealSubject();</span><br><span class="line">        proxy.realSubject = realSubject;</span><br><span class="line">        <span class="keyword">return</span> proxy;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">// Log before and after real process</span></span><br><span class="line">        System.out.println(<span class="string">"Before RealSubject request"</span>);</span><br><span class="line">        realSubject.request();</span><br><span class="line">        System.out.println(<span class="string">"After RealSubject request"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Client<br><figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="built_in">Client</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> request(Subject subject) &#123;</span><br><span class="line">        <span class="comment">// Proxy is same with RealSubject for Client, they are all Subject</span></span><br><span class="line">        subject-&gt;request();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(<span class="keyword">String</span>[] args) &#123;</span><br><span class="line">        <span class="comment">// Client communicate with RealSubject</span></span><br><span class="line">        <span class="built_in">Client</span>.request(new RealSubject());</span><br><span class="line">        <span class="comment">// Client communicate with Proxy </span></span><br><span class="line">        <span class="built_in">Client</span>.request(Proxy.getInstance());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="动态代理"><a href="#动态代理" class="headerlink" title="动态代理"></a>动态代理</h2><p>静态代理有个明显的缺点：随着需要代理的目标类越来越多，或目标类的方法越来越多，Proxy 的代码越来越难以维护。每次新增或者修改目标类的代码，对应的 Proxy 的代码也需要跟着改。</p>
+<p>动态代理的意思就是，Proxy 类是在运行期生成的，不需要在编译前就把它的代码设计出来，这样我们就不需要关心 Proxy 类的复杂性了。</p>
+<p>Java 中的动态代理有 JDK 动态代理和 cglib 动态代理两种，下面分别来说一下。</p>
+<h3 id="JDK-动态代理"><a href="#JDK-动态代理" class="headerlink" title="JDK 动态代理"></a>JDK 动态代理</h3><p>JDK 动态代理中的各角色如下图所示：</p>
+<p><img src="http://abandonzhang-blog-pictures.qiniudn.com/JDK%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86UML%E5%9B%BE" alt=""></p>
+<p>来分析一下 JDK 动态代理中新增的这些角色的作用：</p>
+<ul>
+<li>Proxy$xxx：之所以是这样一个奇怪的类名，是因为这个类名是 JDK 自动生成的，我们不需要自己设计和编写每个 Proxy 类的代码</li>
+<li>Proxy：既是所有 JDK 动态代理类的基类，又是一个工具类，向用户提供获取动态代理类的方法</li>
+<li>InvocationHandler：动态代理执行时的回调处理接口。每个 JDK 动态代理执行方法时都是调用 InvocationHandler 的 invoke 方法处理具体逻辑</li>
+<li>MyInvocationHandler：用户自定义的 InvocationHandler 的实现</li>
+</ul>
+<h4 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h4><figure class="highlight delphi"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">Object</span> newProxyInstance(ClassLoader loader,</span><br><span class="line">                                      <span class="keyword">Class</span>&lt;?&gt;[] interfaces,</span><br><span class="line">                                      InvocationHandler h)</span><br><span class="line">    throws IllegalArgumentException</span><br></pre></td></tr></table></figure>
+<p>JDK 动态代理类的生成由 Proxy.newProxyInstance 方法实现。方法接受三个参数：ClassLoader 、 interfaces 和 InvocationHandler 的实例。</p>
+<p>下面看一下具体在代码中如何使用它。</p>
+<p>跟静态代理相比，我们的 Subject 和 RealSubject 都没有变化。有变化的是，原来我们需要自己设计 Proxy 类，现在我们需要自己设计 InvocationHandler 类，Client 的相应处理也有些许变化。</p>
+<p>在这里可能看不出实现 Proxy 类和实现 MyInvocationHandler 类有什么区别；不过当你要代理的类很多时，你就能体会到显著的区别了。</p>
+<p>MyInvocationHandler<br><figure class="highlight nimrod"><table><tr><td class="code"><pre><span class="line">public class <span class="type">MyInvocatioHandler</span> implements <span class="type">InvocationHandler</span> &#123;</span><br><span class="line">    private <span class="type">Object</span> target;</span><br><span class="line">    public <span class="type">MyInvocatioHandler</span>(<span class="type">Object</span> target) &#123;</span><br><span class="line">        this.target = target;</span><br><span class="line">    &#125;</span><br><span class="line">    @<span class="type">Override</span></span><br><span class="line">    public <span class="type">Object</span> invoke(<span class="type">Object</span> proxy, <span class="type">Method</span> <span class="keyword">method</span>, <span class="type">Object</span>[] args) throws <span class="type">Throwable</span> &#123;</span><br><span class="line">        // <span class="type">Log</span> before <span class="keyword">and</span> after real process</span><br><span class="line">        <span class="type">System</span>.<span class="keyword">out</span>.println(<span class="string">"Before request"</span>);</span><br><span class="line">        <span class="type">Object</span> <span class="literal">result</span> = <span class="keyword">method</span>.invoke(target, args);</span><br><span class="line">        <span class="type">System</span>.<span class="keyword">out</span>.println(<span class="string">"After request"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">result</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Client<br><figure class="highlight aspectj"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Client</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">request</span><span class="params">(Subject subject)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// Proxy is same with RealSubject for Client, they are all Subject</span></span><br><span class="line">        subject-&gt;request();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        RealSubject realSubject = <span class="keyword">new</span> RealSubject();</span><br><span class="line">        <span class="comment">// Client communicate with RealSubject</span></span><br><span class="line">        Client.request(realSubject);</span><br><span class="line">        <span class="comment">// Client communicate with Proxy</span></span><br><span class="line">        ClassLoader loader = Thread.currentThread().getContextClassLoader();</span><br><span class="line">        Class&lt;?&gt;[] interfaces = realSubject.getClass().getInterfaces();</span><br><span class="line">        InvocationHandler <span class="keyword">handler</span> = <span class="keyword">new</span> MyInvocatioHandler(realSubject);</span><br><span class="line">        Client.request(Proxy.newProxyInstance(loader, interfaces, <span class="keyword">handler</span>));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h4><p>Proxy.newProxyInstance 中的核心实现是：<br><figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span><br><span class="line"> * Look up or generate the designated proxy class.</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">Class</span>&lt;?&gt; <span class="keyword">cl</span> = getProxyClass0(loader, intfs);</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">final Constructor&lt;?&gt; <span class="keyword">cons</span> = <span class="keyword">cl</span>.getConstructor(constructorParams);</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> <span class="keyword">cons</span>.newInstance(new Object[]&#123;<span class="keyword">h</span>&#125;);</span><br></pre></td></tr></table></figure></p>
+<h5 id="第一步：生成和加载动态代理类"><a href="#第一步：生成和加载动态代理类" class="headerlink" title="第一步：生成和加载动态代理类"></a>第一步：生成和加载动态代理类</h5><p>Proxy.getProxyClass0() 方法通过 WeakCache 对象来缓存全局的代理类的 Class，并向 WeakCache 提供了一个 ProxyClassFactory 的工厂方法。当在 WeakCache 中找不到时，就会调用 ProxyClassFactory 中真正的生成方法，然后缓存到 WeakCache 中。</p>
+<p>ProxyClassFactory 生成代理类的过程：<br><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> ProxyClassFactory</span><br><span class="line">    <span class="keyword">implements</span> BiFunction&lt;ClassLoader, <span class="keyword">Class</span>&lt;?&gt;[], <span class="keyword">Class</span>&lt;?&gt;&gt;</span><br><span class="line">&#123;</span><br><span class="line">    ......</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">Class</span>&lt;?&gt; apply(ClassLoader loader, <span class="keyword">Class</span>&lt;?&gt;[] interfaces) &#123;</span><br><span class="line">        <span class="comment">// 校验 interfaces 是否都是接口；是否能被 ClassLoader 加载；是否有重复</span></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将代理类访问标记设为 public final</span></span><br><span class="line">        <span class="keyword">int</span> accessFlags = Modifier.<span class="keyword">PUBLIC</span> | Modifier.<span class="keyword">FINAL</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 校验所有 non-public 的接口是否都在一个 package</span></span><br><span class="line">        <span class="comment">// 将代理类的 package 设为这些 non-public 接口所在的 package</span></span><br><span class="line">        <span class="comment">// 如果没有 non-public 的接口，则将代理类的 package 设为 com.sun.proxy</span></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 生成代理类名称（包括完整的包路径）</span></span><br><span class="line">        ......</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 生成代理类的字节码</span></span><br><span class="line">        <span class="keyword">byte</span>[] proxyClassFile = ProxyGenerator.generateProxyClass(</span><br><span class="line">            proxyName, interfaces, accessFlags);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 加载字节码到 JVM 中</span></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> defineClass0(loader, proxyName, proxyClassFile, <span class="number">0</span>, proxyClassFile.length);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (ClassFormatError e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(e.toString());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h5 id="第二步：构造新实例，传入回调接口"><a href="#第二步：构造新实例，传入回调接口" class="headerlink" title="第二步：构造新实例，传入回调接口"></a>第二步：构造新实例，传入回调接口</h5><p>获取到代理类的 Class 对象之后，就可以获取它的 Constructor，然后通过 Constructor 的 newInstance 方法调用代理类的构造函数，将 InvocationHandler 实例传给代理类，最后将生成的代理类实例返回给用户。</p>
+<h4 id="反编译生成的动态代理类"><a href="#反编译生成的动态代理类" class="headerlink" title="反编译生成的动态代理类"></a>反编译生成的动态代理类</h4><p>在 ProxyGenerator.generateProxyClass() 方法中可以看到有一个静态变量 saveGeneratedFiles 可以决定生成的字节码是否要保存到磁盘中。进一步可以看到这个变量实际上就是获取了名为 “sun.misc.ProxyGenerator.saveGeneratedFiles” 的系统属性（System.getProperty）。因此我们可以把对应的 saveGeneratedFiles 置为 true，然后就可以获得代理类的 class 文件，进而可以反编译它看到生成的代理类是什么样子了。</p>
+<p>下面是一个例子：<br><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> $Proxy0 <span class="keyword">extends</span> Proxy</span><br><span class="line">  <span class="keyword">implements</span> Subject</span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> Method m1;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> Method m3;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> Method m0;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> Method m2;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> $Proxy0(InvocationHandler paramInvocationHandler)</span><br><span class="line">    <span class="keyword">throws</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">super</span>(paramInvocationHandler);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> equals(Object paramObject)</span><br><span class="line">    <span class="keyword">throws</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">return</span> ((<span class="keyword">Boolean</span>)<span class="keyword">this</span>.h.invoke(<span class="keyword">this</span>, m1, <span class="keyword">new</span> Object[] &#123; paramObject &#125;)).booleanValue();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Error|RuntimeException localError)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> localError;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable localThrowable)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> UndeclaredThrowableException(localThrowable);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> request()</span><br><span class="line">    <span class="keyword">throws</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">this</span>.h.invoke(<span class="keyword">this</span>, m3, <span class="keyword">null</span>);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Error|RuntimeException localError)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> localError;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable localThrowable)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> UndeclaredThrowableException(localThrowable);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">int</span> hashCode()</span><br><span class="line">    <span class="keyword">throws</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">return</span> ((Integer)<span class="keyword">this</span>.h.invoke(<span class="keyword">this</span>, m0, <span class="keyword">null</span>)).intValue();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Error|RuntimeException localError)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> localError;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable localThrowable)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> UndeclaredThrowableException(localThrowable);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">final</span> String toString()</span><br><span class="line">    <span class="keyword">throws</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">return</span> (String)<span class="keyword">this</span>.h.invoke(<span class="keyword">this</span>, m2, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Error|RuntimeException localError)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> localError;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (Throwable localThrowable)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> UndeclaredThrowableException(localThrowable);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">static</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">      m1 = <span class="keyword">Class</span>.forName(<span class="string">"java.lang.Object"</span>).getMethod(<span class="string">"equals"</span>, <span class="keyword">new</span> <span class="keyword">Class</span>[] &#123; <span class="keyword">Class</span>.forName(<span class="string">"java.lang.Object"</span>) &#125;);</span><br><span class="line">      m3 = <span class="keyword">Class</span>.forName(<span class="string">"com.demo.Subject"</span>).getMethod(<span class="string">"request"</span>, <span class="keyword">new</span> <span class="keyword">Class</span>[<span class="number">0</span>]);</span><br><span class="line">      m0 = <span class="keyword">Class</span>.forName(<span class="string">"java.lang.Object"</span>).getMethod(<span class="string">"hashCode"</span>, <span class="keyword">new</span> <span class="keyword">Class</span>[<span class="number">0</span>]);</span><br><span class="line">      m2 = <span class="keyword">Class</span>.forName(<span class="string">"java.lang.Object"</span>).getMethod(<span class="string">"toString"</span>, <span class="keyword">new</span> <span class="keyword">Class</span>[<span class="number">0</span>]);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (NoSuchMethodException localNoSuchMethodException)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchMethodError(localNoSuchMethodException.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (ClassNotFoundException localClassNotFoundException)</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> NoClassDefFoundError(localClassNotFoundException.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>从代码中可以看到， JDK 动态代理根据反射来定位到目标类的方法，并且代理类中的每个方法都是代理给 InvocationHandler 的 invoke 方法去执行。 </p>
+<h4 id="局限"><a href="#局限" class="headerlink" title="局限"></a>局限</h4><p>由于 JDK 动态代理中是根据 interface 来生成类字节码的，因此那些没有实现接口的类或类其中的方法就无法通过 JDK 动态代理访问到。</p>
+<h3 id="cglib-动态代理"><a href="#cglib-动态代理" class="headerlink" title="cglib 动态代理"></a>cglib 动态代理</h3><p><a href="https://github.com/cglib/cglib" target="_blank" rel="external">cglib</a> 是一个第三方的动态代理类生成工具。并且 cglib 并不限制被代理的目标类必须实现接口，这对 JDK 动态代理类是一个很好的补充。</p>
+<p>Spring AOP 中便是默认对有实现接口的类使用 JDK 动态代理，对没有实现接口的类使用 cglib 动态代理。</p>
+<h4 id="使用方法-1"><a href="#使用方法-1" class="headerlink" title="使用方法"></a>使用方法</h4><p>与 JDK 动态代理的核心类 <code>Proxy</code> 一样， cglib 动态代理也有个核心类： <code>Enhancer</code> 。</p>
+<p>Enhancer 中创建动态代理的方法是 create ，但在调用这个方法之前，必须先通过 setSuperclass 和 setCallback 设置被代理的目标类和代理时的回调类（类似 JDK 动态代理的 InvocationHandler ）。</p>
+<p>cglib 中定义了6种回调类，它们都实现了 cglib 中的 Callback 接口。</p>
+<ul>
+<li>InvocationHandler</li>
+<li>MethodInterceptor</li>
+<li>FixedValue</li>
+<li>LazyLoader</li>
+<li>Dispatcher</li>
+<li>NoOp</li>
+</ul>
+<p>InvocationHandler 和 JDK 动态代理中的 InvocationHandler 使用方法几乎一模一样。如果我们要在代理时调用到目标类的方法，就必须自己在构造 InvocationHandler 时把目标类对象保存进来。另外也要注意调用 method.invoke 时一定传的是原始的目标类对象，而不是 proxy 对象，否则会陷入无限递归调用中。</p>
+<p>MethodInterceptor 是 cglib 中对 InvocationHandler 增强的一个回调类。它会在接口方法中将原目标类的一个对象传给我们，并且通过 proxy.invokeSuper() 方法可以直接调用目标类对象的对应方法。</p>
+<p>后面几个暂时先不提了，后面再补充。</p>
+<p>通过 MethodInterceptor 和匿名函数，我们可以非常简单的实现上面的 realSubject 的代理，连定义 MyInvocationHandler 类也不需要了。<br><figure class="highlight cs"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Client</span> &#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">request</span>(<span class="params">RealSubject realSubject</span>) </span>&#123;</span><br><span class="line">        realSubject-&gt;request();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span>(<span class="params">String[] args</span>) </span>&#123;</span><br><span class="line">        RealSubject realSubject = <span class="keyword">new</span> RealSubject();</span><br><span class="line">        <span class="comment">// Client communicate with RealSubject</span></span><br><span class="line">        Client.request(realSubject);</span><br><span class="line">        <span class="comment">// Client communicate with Proxy</span></span><br><span class="line">        Enhancer enhancer = <span class="keyword">new</span> Enhancer();</span><br><span class="line">        enhancer.setSuperclass(RealSubject.class);</span><br><span class="line">        enhancer.setCallback(<span class="keyword">new</span> MethodInterceptor() &#123;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> Object <span class="title">intercept</span>(<span class="params">Object obj, Method method, Object[] args, MethodProxy proxy</span>) throws Throwable </span>&#123;</span><br><span class="line">                System.<span class="keyword">out</span>.println(<span class="string">"Before request"</span>);</span><br><span class="line">                Object <span class="keyword">object</span> = proxy.invokeSuper(obj, args);</span><br><span class="line">                System.<span class="keyword">out</span>.println(<span class="string">"After request"</span>);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">object</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        Client.request((RealSubject) enhancer.create());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="未完待续"><a href="#未完待续" class="headerlink" title="未完待续"></a>未完待续</h4>
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    AbandonZHANG
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.abandonzhang.me/2017/07/30/Proxy-Pattern-And-Java-Dynamic-Proxy/" title="代理模式和 Java 动态代理">http://blog.abandonzhang.me/2017/07/30/Proxy-Pattern-And-Java-Dynamic-Proxy/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
+          
+            <a href="/tags/设计模式/" rel="tag"># 设计模式</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/05/13/Java-ThreadPool/" rel="next" title="Java 线程池">
+                <i class="fa fa-chevron-left"></i> Java 线程池
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/09/05/Java-Collections-Framework/" rel="prev" title="Java Collections Framework">
+                Java Collections Framework <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="AbandonZHANG" />
+            
+              <p class="site-author-name" itemprop="name">AbandonZHANG</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#代理模式"><span class="nav-number">1.</span> <span class="nav-text">代理模式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#UML-类图"><span class="nav-number">1.1.</span> <span class="nav-text">UML 类图</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#静态代理"><span class="nav-number">2.</span> <span class="nav-text">静态代理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#动态代理"><span class="nav-number">3.</span> <span class="nav-text">动态代理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#JDK-动态代理"><span class="nav-number">3.1.</span> <span class="nav-text">JDK 动态代理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用方法"><span class="nav-number">3.1.1.</span> <span class="nav-text">使用方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现原理"><span class="nav-number">3.1.2.</span> <span class="nav-text">实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#第一步：生成和加载动态代理类"><span class="nav-number">3.1.2.1.</span> <span class="nav-text">第一步：生成和加载动态代理类</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第二步：构造新实例，传入回调接口"><span class="nav-number">3.1.2.2.</span> <span class="nav-text">第二步：构造新实例，传入回调接口</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#反编译生成的动态代理类"><span class="nav-number">3.1.3.</span> <span class="nav-text">反编译生成的动态代理类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#局限"><span class="nav-number">3.1.4.</span> <span class="nav-text">局限</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cglib-动态代理"><span class="nav-number">3.2.</span> <span class="nav-text">cglib 动态代理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用方法-1"><span class="nav-number">3.2.1.</span> <span class="nav-text">使用方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#未完待续"><span class="nav-number">3.2.2.</span> <span class="nav-text">未完待续</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">AbandonZHANG ♥ clytze</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.1"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+
+<!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+</body>
+</html>

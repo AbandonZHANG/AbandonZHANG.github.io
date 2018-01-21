@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.0.1" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.0.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.0.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.0.1" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.0.1',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+
+  
+  <meta name="keywords" content="Linux," />
+
+
+<meta name="description" content="sed也是Linux/Unix下的一个文本处理工具（上次介绍了awk），全称为stream editor，由Bell Labs在1974年发布。sed在它擅长的方面实现起来更加快速和简单，因此直到今天它还是一个很受欢迎的工具。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sed - 高效的文本替换语言">
+<meta property="og:url" content="http://blog.abandonzhang.me/2016/01/03/Sed/index.html">
+<meta property="og:site_name" content="蝸牛">
+<meta property="og:description" content="sed也是Linux/Unix下的一个文本处理工具（上次介绍了awk），全称为stream editor，由Bell Labs在1974年发布。sed在它擅长的方面实现起来更加快速和简单，因此直到今天它还是一个很受欢迎的工具。">
+<meta property="og:updated_time" content="2018-01-21T10:14:19.680Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="sed - 高效的文本替换语言">
+<meta name="twitter:description" content="sed也是Linux/Unix下的一个文本处理工具（上次介绍了awk），全称为stream editor，由Bell Labs在1974年发布。sed在它擅长的方面实现起来更加快速和简单，因此直到今天它还是一个很受欢迎的工具。">
+
+
+
+  <link rel="alternate" href="/atom.xml" title="蝸牛" type="application/atom+xml" />
+
+
+
+
+  <link rel="canonical" href="http://blog.abandonzhang.me/2016/01/03/Sed/"/>
+
+
+  <title>sed - 高效的文本替换语言 | 蝸牛</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"> <div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蝸牛</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">小小的天有大大的夢想</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签</a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档</a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2016/01/03/Sed/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="AbandonZHANG">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蝸牛">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">sed - 高效的文本替换语言</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-01-03T17:03:45+08:00">Jan 03, 2016</time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>sed也是Linux/Unix下的一个文本处理工具（上次介绍了<a href="http://blog.abandonzhang.me/2015/12/07/awk/">awk</a>），全称为stream editor，由Bell Labs在1974年发布。sed在它擅长的方面实现起来更加快速和简单，因此直到今天它还是一个很受欢迎的工具。</p>
+<a id="more"></a>
+<h2 id="How-sed-works"><a href="#How-sed-works" class="headerlink" title="How sed works"></a>How sed works</h2><p>sed程序以行为单位读入和处理文本，一个标准的sed处理过程如下：</p>
+<ol>
+<li>从输入流（input stream）中读入一行数据，存入pattern space中。</li>
+<li>执行sed命令。sed的命令格式为[address]command，command前可以附加address来限制可以执行command的行。</li>
+<li>清空pattern space。在清空前，如果没有-n参数，则将pattern space中的内容输出到stdout（标准输出）。</li>
+<li>如果遇到EOF（文件末尾，或Linux环境标准输入的Ctrl-D信号）则退出，否则转到步骤1继续读取下一行。</li>
+</ol>
+<h2 id="address"><a href="#address" class="headerlink" title="address"></a>address</h2><p>address可以限制执行command的行，可以有以下形式（未全部列出）：</p>
+<table>
+<thead>
+<tr>
+<th>address</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>number[,number]</td>
+<td>第n行读入文本执行command；num1,num2表示第num1行到num2行之间的读入文本执行command</td>
+</tr>
+<tr>
+<td>$</td>
+<td>最后一行读入文本执行command</td>
+</tr>
+<tr>
+<td>/regexp/</td>
+<td>文本行正则匹配regexp时执行command</td>
+</tr>
+<tr>
+<td>/regexp/I</td>
+<td>（GNU extension）同上，正则匹配时大小写不敏感</td>
+</tr>
+<tr>
+<td>!</td>
+<td>接在address后，表示匹配到这个address的行不执行command</td>
+</tr>
+</tbody>
+</table>
+<p>如果不指定address，则所有的读入行都执行command；指定address之后，只有匹配address的行才执行command。</p>
+<h2 id="sed的文本替换命令s"><a href="#sed的文本替换命令s" class="headerlink" title="sed的文本替换命令s"></a>sed的文本替换命令s</h2><p>s是sed的文本替换命令，是sed中最重要和最常用的一个功能。其格式为：<code>s/regexp/replacement/flags</code>。</p>
+<ul>
+<li><p>regexp是一个正则表达式，sed会将pattern space中的内容与regexp进行匹配，如果匹配则将pattern space中的内容替换为replacement。</p>
+</li>
+<li><p>flags指定了匹配和替换时的动作，常用的flag有（未全部列出）：</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>flag</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>g</td>
+<td>将pattern space中所有的匹配全部替换为replacement。（g前面加number时表示从第n个匹配才开始全部替换）</td>
+</tr>
+<tr>
+<td>p</td>
+<td>如果替换动作发生，则输出replacement的内容。</td>
+</tr>
+<tr>
+<td>w</td>
+<td>如果替换动作发生，则输出replacement的内容到file文件中。</td>
+</tr>
+<tr>
+<td>i</td>
+<td>（GNU extension）正则匹配时大小写不敏感。</td>
+</tr>
+</tbody>
+</table>
+<p>注意：</p>
+<ul>
+<li>如果没有指定flag g，则只替换pattern space中的第一个匹配。如果flags前加number，则只替换第n个匹配。</li>
+<li>flag可以组合使用，且大部分情况下前后顺序不影响。如ig，gp，gw等。</li>
+</ul>
+<p>（Tips：看完后可以去后面做一下s命令相关的练习~）</p>
+<h2 id="sed的其他命令"><a href="#sed的其他命令" class="headerlink" title="sed的其他命令"></a>sed的其他命令</h2><p>sed还有一些不太常用但是也比较有用的命令（未全部列出）：</p>
+<table>
+<thead>
+<tr>
+<th>command</th>
+<th>格式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>y</td>
+<td>y/source-chars/dest-chars/</td>
+<td>将pattern space中的source-char替换为dest-char；<br>source-chars长度与dest-chars必须相同，对应位置的source-char替换为对应位置的dest-char</td>
+</tr>
+<tr>
+<td>a</td>
+<td>a\text</td>
+<td>append。在pattern space后新一行追加text文本（文本中也可以通过\n转义符换行）</td>
+</tr>
+<tr>
+<td>i</td>
+<td>i\text</td>
+<td>insert。在pattern space前新一行插入text文本（文本中也可以通过\n转义符换行）</td>
+</tr>
+<tr>
+<td>c</td>
+<td>c\text</td>
+<td>将pattern space中的内容完全替换为test文本</td>
+</tr>
+<tr>
+<td>=</td>
+<td></td>
+<td>在pattern space后新一行加入行号</td>
+</tr>
+<tr>
+<td>r</td>
+<td>r file</td>
+<td>从file读入文本追加到pattern space中</td>
+</tr>
+<tr>
+<td>w</td>
+<td>w file</td>
+<td>将pattern space的内容写到file中</td>
+</tr>
+<tr>
+<td>d</td>
+<td></td>
+<td>清空pattern space的内容，立刻开始读入下一行</td>
+</tr>
+<tr>
+<td>p</td>
+<td></td>
+<td>输出pattern space的内容（到stdout）</td>
+</tr>
+<tr>
+<td>h</td>
+<td></td>
+<td>将hold space中的内容替换为pattern space的内容</td>
+</tr>
+<tr>
+<td>H</td>
+<td></td>
+<td>在hold space后新一行追加pattern space的内容</td>
+</tr>
+<tr>
+<td>g</td>
+<td></td>
+<td>将pattern space中的内容替换为hold space的内容</td>
+</tr>
+<tr>
+<td>G</td>
+<td></td>
+<td>在pattern space后新一行追加hold space的内容</td>
+</tr>
+<tr>
+<td>x</td>
+<td></td>
+<td>互换pattern space和hold space的内容</td>
+</tr>
+<tr>
+<td>q</td>
+<td></td>
+<td>退出sed程序（如果-n参数时会先输出pattern space的内容）</td>
+</tr>
+</tbody>
+</table>
+<p>PS：hold space是sed的一个辅助空间，不会自动填入，也不会自动清空。</p>
+<h2 id="练习"><a href="#练习" class="headerlink" title="练习"></a>练习</h2><figure class="highlight stata"><table><tr><td class="code"><pre><span class="line"><span class="keyword">cat</span> demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// one,one,one,one</span></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// one,one</span></span><br><span class="line"><span class="comment">// two</span></span><br></pre></td></tr></table></figure>
+<h3 id="sed替换命令练习"><a href="#sed替换命令练习" class="headerlink" title="sed替换命令练习"></a>sed替换命令练习</h3><ol>
+<li><p>每行的one都替换为ten</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">sed 's/<span class="keyword">one</span>/ten/<span class="keyword">g</span>' demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// ten,ten,ten,ten</span></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// ten,ten</span></span><br><span class="line"><span class="comment">// two</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>每行除了第一个one都替换为ten</p>
+<figure class="highlight actionscript"><table><tr><td class="code"><pre><span class="line">sed <span class="string">'s/one/ten/2g'</span> demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// one,ten,ten,ten</span></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// one,ten</span></span><br><span class="line"><span class="comment">// two</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>每行的第二个one替换为ten</p>
+<figure class="highlight actionscript"><table><tr><td class="code"><pre><span class="line">sed <span class="string">'s/one/ten/2'</span> demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// one,ten,one,one</span></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// one,ten</span></span><br><span class="line"><span class="comment">// two</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>第三行的one替换为six</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">sed '3s/<span class="keyword">one</span>/six/<span class="keyword">g</span>' demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// one,one,one,one</span></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// six,six</span></span><br><span class="line"><span class="comment">// two</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>二三行的one或two替换为six</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">sed '2,3s/<span class="keyword">one</span>\|<span class="keyword">two</span>/six/<span class="keyword">g</span>' demo	<span class="comment">// 这里正则表达式中的的|要转义</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// one,one,one,one</span></span><br><span class="line"><span class="comment">// six,six,six</span></span><br><span class="line"><span class="comment">// six,six</span></span><br><span class="line"><span class="comment">// two</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>只有一个two的行，two替换为six</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">sed '/^<span class="keyword">two</span>$/s/<span class="keyword">two</span>/six/<span class="keyword">g</span>' demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// one,one,one,one</span></span><br><span class="line"><span class="comment">// two,two,two</span></span><br><span class="line"><span class="comment">// one,one</span></span><br><span class="line"><span class="comment">// six</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h3 id="sed其他命令练习"><a href="#sed其他命令练习" class="headerlink" title="sed其他命令练习"></a>sed其他命令练习</h3><ol>
+<li><p>删除有one的行</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">sed '/<span class="keyword">one</span>/<span class="keyword">d</span>' demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// two</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在每行后面加一行’hello, world!’</p>
+<figure class="highlight actionscript"><table><tr><td class="code"><pre><span class="line">sed <span class="string">'a\hello, world!'</span> demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// one,one,one,one</span></span><br><span class="line"><span class="comment">// hello, world!</span></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// hello, world!</span></span><br><span class="line"><span class="comment">// one,one</span></span><br><span class="line"><span class="comment">// hello, world!</span></span><br><span class="line"><span class="comment">// two</span></span><br><span class="line"><span class="comment">// hello, world!</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>按行反序一个文件</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">sed '1!<span class="keyword">G</span>;<span class="keyword">h</span>;$!<span class="keyword">d</span>' demo</span><br><span class="line"></span><br><span class="line"><span class="comment">// two</span></span><br><span class="line"><span class="comment">// one,one</span></span><br><span class="line"><span class="comment">// two,two,two,</span></span><br><span class="line"><span class="comment">// one,one,one,one</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h2 id="推荐资料"><a href="#推荐资料" class="headerlink" title="推荐资料"></a>推荐资料</h2><ol>
+<li><a href="http://www.gnu.org/software/sed/manual/sed.html" target="_blank" rel="external">sed, a stream editor</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Sed#Substitution_command" target="_blank" rel="external">wikipedia - sed</a></li>
+</ol>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+      <div>
+        <ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者：</strong>
+    AbandonZHANG
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://blog.abandonzhang.me/2016/01/03/Sed/" title="sed - 高效的文本替换语言">http://blog.abandonzhang.me/2016/01/03/Sed/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>
+    本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" rel="external nofollow" target="_blank">CC BY-NC-SA 3.0</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+
+      </div>
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux/" rel="tag"># Linux</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/12/06/Awk/" rel="next" title="awk - 强大的文本处理语言">
+                <i class="fa fa-chevron-left"></i> awk - 强大的文本处理语言
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/01/05/Regexes/" rel="prev" title="编程语言中的正则表达式">
+                编程语言中的正则表达式 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/avatar.jpg"
+                alt="AbandonZHANG" />
+            
+              <p class="site-author-name" itemprop="name">AbandonZHANG</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#How-sed-works"><span class="nav-number">1.</span> <span class="nav-text">How sed works</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#address"><span class="nav-number">2.</span> <span class="nav-text">address</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sed的文本替换命令s"><span class="nav-number">3.</span> <span class="nav-text">sed的文本替换命令s</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sed的其他命令"><span class="nav-number">4.</span> <span class="nav-text">sed的其他命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#练习"><span class="nav-number">5.</span> <span class="nav-text">练习</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#sed替换命令练习"><span class="nav-number">5.1.</span> <span class="nav-text">sed替换命令练习</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sed其他命令练习"><span class="nav-number">5.2.</span> <span class="nav-text">sed其他命令练习</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#推荐资料"><span class="nav-number">6.</span> <span class="nav-text">推荐资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">AbandonZHANG ♥ clytze</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Gemini</a> v6.0.1</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.0.1"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+
+<!-- Begin: Injected MathJax -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({"tex2jax":{"inlineMath":[["$","$"],["\\(","\\)"]],"skipTags":["script","noscript","style","textarea","pre","code"],"processEscapes":true},"TeX":{"equationNumbers":{"autoNumber":"AMS"}}});
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+<!-- End: Injected MathJax -->
+</body>
+</html>
