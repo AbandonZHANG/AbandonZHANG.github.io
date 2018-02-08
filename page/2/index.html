@@ -265,7 +265,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2017/01/28/META-INF-and-WEB-INF/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="AbandonZHANG">
@@ -284,7 +284,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2016/11/02/PhpStorm-Sftp/" itemprop="url">用 PhpStorm 和 SFTP 搭建高效的开发环境</a></h1>
+                <a class="post-title-link" href="/2017/01/28/META-INF-and-WEB-INF/" itemprop="url">META-INF 和 WEB-INF</a></h1>
         
 
         <div class="post-meta">
@@ -296,7 +296,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-02T15:25:15+08:00">Nov 02, 2016</time>
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-28T18:54:01+08:00">Jan 28, 2017</time>
             
 
             
@@ -333,20 +333,13 @@
 
       
         
-          <h2 id="使用PhpStorm的好处"><a href="#使用PhpStorm的好处" class="headerlink" title="使用PhpStorm的好处"></a>使用PhpStorm的好处</h2><ul>
-<li>容易发现语法错误（Vim不易发现）</li>
-<li>智能补全，效率++</li>
-<li>一键Rename重构，不需要再grep</li>
-<li>可集成各种工具（sonar、phpcs等）</li>
-<li>断网也能干活</li>
-</ul>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/11/02/PhpStorm-Sftp/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
+          
+            <h2 id="WEB-INF"><a href="#WEB-INF" class="headerlink" title="WEB-INF"></a>WEB-INF</h2><p>WEB-INF 是 WAR（Web Application Archive）包的一个目录，维护一些 Web 服务端不想让客户端通过URL访问到的资源文件，比如：web.xml，以及 Java 的 classes 和 library 文件等。</p>
+<h2 id="META-INF"><a href="#META-INF" class="headerlink" title="META-INF"></a>META-INF</h2><p>META-INF 是 JAR（Java Archive File）包的一个目录，而 JAR 包本质上就是 zip 格式的压缩包加上一个 META-INF 目录。</p>
+<p>META-INF 目录下存放 Java 应用程序的一些元信息（To configure applications, extensions, class loaders and services）。一个标准的 META-INF 目录通常都包含 MANIFEST.MF 、INDEX.LIST、*.SF、*.DSA、services/ 等文件和目录，此外也可以放一些用户自己的文件。</p>
+<p>由于 WAR 也是一个 JAR 文件，因此 WAR 包下也有 META-INF 目录。</p>
+
+          
         
       
     </div>
@@ -1562,7 +1555,7 @@
                 
                 <div class="site-state-item site-state-tags">
                   <a href="/tags/index.html">
-                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-count">11</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://blog.abandonzhang.me/"/>
-  <updated>2018-01-21T10:14:19.670Z</updated>
+  <updated>2018-02-08T16:18:05.581Z</updated>
   <id>http://blog.abandonzhang.me/</id>
   
   <author>
@@ -16,19 +16,41 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>SkipList 跳表</title>
+    <title>Java Basic IO</title>
+    <link href="http://blog.abandonzhang.me/2018/02/05/Java-Basic-IO/"/>
+    <id>http://blog.abandonzhang.me/2018/02/05/Java-Basic-IO/</id>
+    <published>2018-02-05T10:03:07.000Z</published>
+    <updated>2018-02-08T16:18:05.581Z</updated>
+    
+    <content type="html">&lt;p&gt;未完待续。&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;未完待续。&lt;/p&gt;
+
+    
+    </summary>
+    
+    
+      <category term="Java" scheme="http://blog.abandonzhang.me/tags/Java/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>SkipList 入门</title>
     <link href="http://blog.abandonzhang.me/2018/01/19/SkipList/"/>
     <id>http://blog.abandonzhang.me/2018/01/19/SkipList/</id>
     <published>2018-01-19T09:32:16.000Z</published>
-    <updated>2018-01-21T10:14:19.670Z</updated>
+    <updated>2018-02-08T16:01:13.748Z</updated>
     
-    <content type="html">&lt;p&gt;简单介绍一下 SkipList 的原理。&lt;/p&gt;
+    <content type="html">&lt;p&gt;介绍一个插入/查询复杂度可以媲美红黑树，但实现起来更简单的数据结构 —— SkipList。&lt;/p&gt;
 &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
-&lt;p&gt;SkipList 是用来代替 Self-Balancing Binary Search Tree （如 AVL、红黑树等）的数据结构。它具有以下优势：&lt;/p&gt;
+&lt;p&gt;SkipList 是一个多层次的链表数据结构，用来代替红黑树等自平衡二叉查找树。它具有以下优势：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;理解、实现简单&lt;/li&gt;
-&lt;li&gt;绝大多数情况下（概率）时空复杂度与 Self-Balancing Binary Search Tree 相当&lt;/li&gt;
-&lt;li&gt;插入、删除操作简单，高并发环境下优势较大（Self-Balancing Binary Search Tree 基本都需要自旋）&lt;/li&gt;
+&lt;li&gt;均摊时间复杂度与自平衡二叉查找树相当&lt;/li&gt;
+&lt;li&gt;插入、删除操作简单，高并发环境下优势较大&lt;/li&gt;
 &lt;li&gt;容易实现线程安全的版本&lt;/li&gt;
 &lt;li&gt;范围查询效率高&lt;/li&gt;
 &lt;/ul&gt;
@@ -44,9 +66,8 @@
 &lt;li&gt;图 b ：在 level 0 List 的基础上新增一层 level 1 List（间隔部分元素），同时，同一位置的元素切换到另一个 level List 的时间复杂度为常数级别&lt;br&gt;（为了简化问题，暂定间隔是均匀分布的。图 b 的间隔即为 2，则时间复杂度为：|L1| + |L0|/|L1| = O(N/2) + 2）&lt;/li&gt;
 &lt;li&gt;图 c / d ：在 level i List 的基础上新增一层 level i+1 List。间隔仍为 2。时间复杂度为：|Lk| + |Lk-1|/|Lk| + |Lk-2|/|Lk-1| + … + |L0|/|L1|&lt;br&gt;（间隔为 2 时，最多可以建 log2N 层的 level，即 k= log2N，Lk 一般是1个或2个元素，因此最后的时间复杂度为 2 * log2N = O(log2N)）&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;理想很丰满，现实很骨感……&lt;/p&gt;
-&lt;p&gt;维护一致间隔的成本很高，在插入和删除时均需要做大量调整，与 Self-Balancing Binary Search Tree 相比不一定更有优势了&lt;/p&gt;
-&lt;p&gt;Skip List 的做法是：节点的最高 level 在插入时随机决定，此后不再发生变化&lt;/p&gt;
+&lt;p&gt;理想很丰满，现实很骨感。维护一致间隔的成本很高，在插入和删除时均需要做大量调整，这样与自平衡二叉查找树相比不一定更有优势了。&lt;/p&gt;
+&lt;p&gt;SkipList 的做法是：节点的最高 level 在插入时随机决定，此后不再发生变化&lt;/p&gt;
 &lt;p&gt;具体的随机规则是：&lt;br&gt;&lt;figure class=&quot;highlight matlab&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;定义概率p：表示当节点有 level &lt;span class=&quot;built_in&quot;&gt;i&lt;/span&gt; 时，同时会有 level &lt;span class=&quot;built_in&quot;&gt;i&lt;/span&gt;+&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt; 的概率&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;从 level &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt; 开始，类似抛硬币，每次独立地判断本次概率是否大于p，大于则 level+&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
 &lt;p&gt;令 L(N) = max level，则可以证明 L(N) = $log_{1/p}N$。当 p = 1/2 时，L(N) = $log_2N$。&lt;/p&gt;
 &lt;h3 id=&quot;查询&quot;&gt;&lt;a href=&quot;#查询&quot; class=&quot;headerlink&quot; title=&quot;查询&quot;&gt;&lt;/a&gt;查询&lt;/h3&gt;&lt;p&gt;&lt;img src=&quot;http://abandonzhang-blog-pictures.qiniudn.com/SkipList_2.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
@@ -75,7 +96,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;简单介绍一下 SkipList 的原理。&lt;/p&gt;
+      &lt;p&gt;介绍一个插入/查询复杂度可以媲美红黑树，但实现起来更简单的数据结构 —— SkipList。&lt;/p&gt;
     
     </summary>
     
@@ -85,13 +106,15 @@
   </entry>
   
   <entry>
-    <title>JVM 参数</title>
-    <link href="http://blog.abandonzhang.me/2017/12/04/JVM-Args-Recommend/"/>
-    <id>http://blog.abandonzhang.me/2017/12/04/JVM-Args-Recommend/</id>
+    <title>JVM 参数总结</title>
+    <link href="http://blog.abandonzhang.me/2017/12/04/JVM-Args-Summary/"/>
+    <id>http://blog.abandonzhang.me/2017/12/04/JVM-Args-Summary/</id>
     <published>2017-12-04T15:56:37.000Z</published>
-    <updated>2018-01-21T10:14:19.664Z</updated>
+    <updated>2018-02-08T16:15:58.945Z</updated>
     
-    <content type="html">&lt;h2 id=&quot;标准参数&quot;&gt;&lt;a href=&quot;#标准参数&quot; class=&quot;headerlink&quot; title=&quot;标准参数&quot;&gt;&lt;/a&gt;标准参数&lt;/h2&gt;&lt;table&gt;
+    <content type="html">&lt;p&gt;记录一下自己学习过的 JVM 启动参数。&lt;/p&gt;
+&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
+&lt;h2 id=&quot;标准参数&quot;&gt;&lt;a href=&quot;#标准参数&quot; class=&quot;headerlink&quot; title=&quot;标准参数&quot;&gt;&lt;/a&gt;标准参数&lt;/h2&gt;&lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
 &lt;th&gt;选项&lt;/th&gt;
@@ -134,14 +157,7 @@
     
     <summary type="html">
     
-      &lt;h2 id=&quot;标准参数&quot;&gt;&lt;a href=&quot;#标准参数&quot; class=&quot;headerlink&quot; title=&quot;标准参数&quot;&gt;&lt;/a&gt;标准参数&lt;/h2&gt;&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th&gt;选项&lt;/th&gt;
-&lt;th&gt;说明&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbod
+      &lt;p&gt;记录一下自己学习过的 JVM 启动参数。&lt;/p&gt;
     
     </summary>
     
@@ -151,13 +167,13 @@
   </entry>
   
   <entry>
-    <title>The OAuth 2.0 Authorization Framework 学习笔记</title>
+    <title>The OAuth 2.0 Authorization Framework 入门</title>
     <link href="http://blog.abandonzhang.me/2017/11/12/OAuth-2-0-Authorization-Framework/"/>
     <id>http://blog.abandonzhang.me/2017/11/12/OAuth-2-0-Authorization-Framework/</id>
     <published>2017-11-12T03:43:55.000Z</published>
-    <updated>2018-01-21T10:14:19.671Z</updated>
+    <updated>2018-02-08T16:14:44.187Z</updated>
     
-    <content type="html">&lt;p&gt;OAuth 授权框架可以帮助采用 HTTP 协议的资源服务管理第三方应用对其资源的访问权限。&lt;/p&gt;
+    <content type="html">&lt;p&gt;学习一下业界标准的第三方应用授权框架 —— OAuth 协议。&lt;/p&gt;
 &lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
 &lt;h2 id=&quot;角色（Roles）&quot;&gt;&lt;a href=&quot;#角色（Roles）&quot; class=&quot;headerlink&quot; title=&quot;角色（Roles）&quot;&gt;&lt;/a&gt;角色（Roles）&lt;/h2&gt;&lt;p&gt;OAuth 2.0 标准中定义了四种角色：&lt;/p&gt;
 &lt;ul&gt;
@@ -368,7 +384,7 @@
     
     <summary type="html">
     
-      &lt;p&gt;OAuth 授权框架可以帮助采用 HTTP 协议的资源服务管理第三方应用对其资源的访问权限。&lt;/p&gt;
+      &lt;p&gt;学习一下业界标准的第三方应用授权框架 —— OAuth 协议。&lt;/p&gt;
     
     </summary>
     
@@ -887,62 +903,6 @@
     
     
       <category term="Java" scheme="http://blog.abandonzhang.me/tags/Java/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>用 PhpStorm 和 SFTP 搭建高效的开发环境</title>
-    <link href="http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/"/>
-    <id>http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/</id>
-    <published>2016-11-02T07:25:15.000Z</published>
-    <updated>2018-01-21T10:14:19.680Z</updated>
-    
-    <content type="html">&lt;h2 id=&quot;使用PhpStorm的好处&quot;&gt;&lt;a href=&quot;#使用PhpStorm的好处&quot; class=&quot;headerlink&quot; title=&quot;使用PhpStorm的好处&quot;&gt;&lt;/a&gt;使用PhpStorm的好处&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;容易发现语法错误（Vim不易发现）&lt;/li&gt;
-&lt;li&gt;智能补全，效率++&lt;/li&gt;
-&lt;li&gt;一键Rename重构，不需要再grep&lt;/li&gt;
-&lt;li&gt;可集成各种工具（sonar、phpcs等）&lt;/li&gt;
-&lt;li&gt;断网也能干活&lt;/li&gt;
-&lt;/ul&gt;
-&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
-&lt;h2 id=&quot;本地搭建环境的问题&quot;&gt;&lt;a href=&quot;#本地搭建环境的问题&quot; class=&quot;headerlink&quot; title=&quot;本地搭建环境的问题&quot;&gt;&lt;/a&gt;本地搭建环境的问题&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;开发用的电脑是Macbook，公司的php扩展（tair，mcc，rabbitmq）安装不怎么支持，环境搭建困难&lt;/li&gt;
-&lt;li&gt;不容易模拟线上机器环境&lt;/li&gt;
-&lt;li&gt;本机还要安装Nginx、php-fpm，配置用户等，也挺麻烦&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id=&quot;IDE-本地搭建&quot;&gt;&lt;a href=&quot;#IDE-本地搭建&quot; class=&quot;headerlink&quot; title=&quot;IDE != 本地搭建&quot;&gt;&lt;/a&gt;IDE != 本地搭建&lt;/h2&gt;&lt;p&gt;通常我们的观念都是用IDE就等于需要本地开发调试，然而……&lt;/p&gt;
-&lt;p&gt;PhpStorm的强大之处在于：可以搭建SFTP部署服务器，实时同步本地与远程机器的文件（加强版自动rsync！）&lt;/p&gt;
-&lt;p&gt;当然首先我们得在远程机器搭建好SFTP服务（不能是FTP）……&lt;/p&gt;
-&lt;h3 id=&quot;首先搭好SSH服务&quot;&gt;&lt;a href=&quot;#首先搭好SSH服务&quot; class=&quot;headerlink&quot; title=&quot;首先搭好SSH服务&quot;&gt;&lt;/a&gt;首先搭好SSH服务&lt;/h3&gt;&lt;p&gt;问题：公司限制本机无法直接ssh到自己的办公云机器&lt;/p&gt;
-&lt;p&gt;解决：我们有办公云root权限啊！&lt;br&gt;&lt;figure class=&quot;highlight dts&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 修改ssh服务的配置文件：&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;vi &lt;span class=&quot;meta-keyword&quot;&gt;/etc/&lt;/span&gt;ssh/sshd_config&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 找到端口号设置的地方&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;Port &lt;span class=&quot;number&quot;&gt;22&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 加一行&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;Port &lt;span class=&quot;number&quot;&gt;2222&lt;/span&gt;   &lt;span class=&quot;meta&quot;&gt;# 监听新端口&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;// 然后重启ssh服务即可！&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;sudo service sshd restart&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
-&lt;p&gt;然后本机就可以通过2222端口ssh到远程办公云了！&lt;/p&gt;
-&lt;h3 id=&quot;搭建FTP服务&quot;&gt;&lt;a href=&quot;#搭建FTP服务&quot; class=&quot;headerlink&quot; title=&quot;搭建FTP服务&quot;&gt;&lt;/a&gt;搭建FTP服务&lt;/h3&gt;&lt;figure class=&quot;highlight sql&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;sudo yum -y &lt;span class=&quot;keyword&quot;&gt;install&lt;/span&gt; vsftpd&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;service vsftpd &lt;span class=&quot;keyword&quot;&gt;start&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
-&lt;h3 id=&quot;PhpStorm设置远程部署&quot;&gt;&lt;a href=&quot;#PhpStorm设置远程部署&quot; class=&quot;headerlink&quot; title=&quot;PhpStorm设置远程部署&quot;&gt;&lt;/a&gt;PhpStorm设置远程部署&lt;/h3&gt;&lt;p&gt;路径：PhpStorm → Preferences → Build, Execution, Deployment → Deployment&lt;/p&gt;
-&lt;p&gt;新建，Type选择SFTP&lt;/p&gt;
-&lt;p&gt;Connection里就是些连接配置&lt;/p&gt;
-&lt;p&gt;Mappings设置本地目录与server目录的映射（即要把哪个目录的文件同步到办公云的哪个目录）&lt;/p&gt;
-&lt;h3 id=&quot;开始High&quot;&gt;&lt;a href=&quot;#开始High&quot; class=&quot;headerlink&quot; title=&quot;开始High&quot;&gt;&lt;/a&gt;开始High&lt;/h3&gt;&lt;p&gt;比较low的模式：每次更改完，想同步的时候，右键项目→ Deployment → Upload To SFTP server&lt;/p&gt;
-&lt;p&gt;轻松模式：Tools→ Deployment → 勾选Automatic Upload&lt;/p&gt;
-&lt;p&gt;这样每次command+s保存文件的时候就可以自动同步到办公云了！&lt;/p&gt;
-&lt;h3 id=&quot;IDE支持Phalcon&quot;&gt;&lt;a href=&quot;#IDE支持Phalcon&quot; class=&quot;headerlink&quot; title=&quot;IDE支持Phalcon&quot;&gt;&lt;/a&gt;IDE支持Phalcon&lt;/h3&gt;&lt;p&gt;IDE不支持Phalcon框架，老是报一堆类、函数未找到也很困扰呀……&lt;/p&gt;
-&lt;p&gt;解决：&lt;a href=&quot;https://github.com/phalcon/phalcon-devtools&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/phalcon/phalcon-devtools&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;下载下来，然后在PhpStorm中项目的External Libraries里面右键Configure PHP Include Paths，加上phalcon-devtools的/ide/stubs/Phalcon目录引入即可。&lt;/p&gt;
-</content>
-    
-    <summary type="html">
-    
-      &lt;h2 id=&quot;使用PhpStorm的好处&quot;&gt;&lt;a href=&quot;#使用PhpStorm的好处&quot; class=&quot;headerlink&quot; title=&quot;使用PhpStorm的好处&quot;&gt;&lt;/a&gt;使用PhpStorm的好处&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;容易发现语法错误（Vim不易发现）&lt;/li&gt;
-&lt;li&gt;智能补全，效率++&lt;/li&gt;
-&lt;li&gt;一键Rename重构，不需要再grep&lt;/li&gt;
-&lt;li&gt;可集成各种工具（sonar、phpcs等）&lt;/li&gt;
-&lt;li&gt;断网也能干活&lt;/li&gt;
-&lt;/ul&gt;
-    
-    </summary>
-    
-    
-      <category term="PHP" scheme="http://blog.abandonzhang.me/tags/PHP/"/>
     
   </entry>
   

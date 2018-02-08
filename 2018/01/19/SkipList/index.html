@@ -100,21 +100,21 @@
   <meta name="keywords" content="数据结构," />
 
 
-<meta name="description" content="简单介绍一下 SkipList 的原理。">
+<meta name="description" content="介绍一个插入/查询复杂度可以媲美红黑树，但实现起来更简单的数据结构 —— SkipList。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="SkipList 跳表">
+<meta property="og:title" content="SkipList 入门">
 <meta property="og:url" content="http://blog.abandonzhang.me/2018/01/19/SkipList/index.html">
 <meta property="og:site_name" content="蝸牛">
-<meta property="og:description" content="简单介绍一下 SkipList 的原理。">
+<meta property="og:description" content="介绍一个插入/查询复杂度可以媲美红黑树，但实现起来更简单的数据结构 —— SkipList。">
 <meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_1.png">
 <meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_2.png">
 <meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_3.png">
 <meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_4.png">
 <meta property="og:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_5.png">
-<meta property="og:updated_time" content="2018-01-21T10:14:19.670Z">
+<meta property="og:updated_time" content="2018-02-08T16:01:13.748Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="SkipList 跳表">
-<meta name="twitter:description" content="简单介绍一下 SkipList 的原理。">
+<meta name="twitter:title" content="SkipList 入门">
+<meta name="twitter:description" content="介绍一个插入/查询复杂度可以媲美红黑树，但实现起来更简单的数据结构 —— SkipList。">
 <meta name="twitter:image" content="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_1.png">
 
 
@@ -127,7 +127,7 @@
   <link rel="canonical" href="http://blog.abandonzhang.me/2018/01/19/SkipList/"/>
 
 
-  <title>SkipList 跳表 | 蝸牛</title>
+  <title>SkipList 入门 | 蝸牛</title>
   
 
 
@@ -288,7 +288,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">SkipList 跳表</h1>
+          <h1 class="post-title" itemprop="name headline">SkipList 入门</h1>
         
 
         <div class="post-meta">
@@ -336,13 +336,13 @@
       
 
       
-        <p>简单介绍一下 SkipList 的原理。</p>
+        <p>介绍一个插入/查询复杂度可以媲美红黑树，但实现起来更简单的数据结构 —— SkipList。</p>
 <a id="more"></a>
-<p>SkipList 是用来代替 Self-Balancing Binary Search Tree （如 AVL、红黑树等）的数据结构。它具有以下优势：</p>
+<p>SkipList 是一个多层次的链表数据结构，用来代替红黑树等自平衡二叉查找树。它具有以下优势：</p>
 <ul>
 <li>理解、实现简单</li>
-<li>绝大多数情况下（概率）时空复杂度与 Self-Balancing Binary Search Tree 相当</li>
-<li>插入、删除操作简单，高并发环境下优势较大（Self-Balancing Binary Search Tree 基本都需要自旋）</li>
+<li>均摊时间复杂度与自平衡二叉查找树相当</li>
+<li>插入、删除操作简单，高并发环境下优势较大</li>
 <li>容易实现线程安全的版本</li>
 <li>范围查询效率高</li>
 </ul>
@@ -358,9 +358,8 @@
 <li>图 b ：在 level 0 List 的基础上新增一层 level 1 List（间隔部分元素），同时，同一位置的元素切换到另一个 level List 的时间复杂度为常数级别<br>（为了简化问题，暂定间隔是均匀分布的。图 b 的间隔即为 2，则时间复杂度为：|L1| + |L0|/|L1| = O(N/2) + 2）</li>
 <li>图 c / d ：在 level i List 的基础上新增一层 level i+1 List。间隔仍为 2。时间复杂度为：|Lk| + |Lk-1|/|Lk| + |Lk-2|/|Lk-1| + … + |L0|/|L1|<br>（间隔为 2 时，最多可以建 log2N 层的 level，即 k= log2N，Lk 一般是1个或2个元素，因此最后的时间复杂度为 2 * log2N = O(log2N)）</li>
 </ul>
-<p>理想很丰满，现实很骨感……</p>
-<p>维护一致间隔的成本很高，在插入和删除时均需要做大量调整，与 Self-Balancing Binary Search Tree 相比不一定更有优势了</p>
-<p>Skip List 的做法是：节点的最高 level 在插入时随机决定，此后不再发生变化</p>
+<p>理想很丰满，现实很骨感。维护一致间隔的成本很高，在插入和删除时均需要做大量调整，这样与自平衡二叉查找树相比不一定更有优势了。</p>
+<p>SkipList 的做法是：节点的最高 level 在插入时随机决定，此后不再发生变化</p>
 <p>具体的随机规则是：<br><figure class="highlight matlab"><table><tr><td class="code"><pre><span class="line">定义概率p：表示当节点有 level <span class="built_in">i</span> 时，同时会有 level <span class="built_in">i</span>+<span class="number">1</span> 的概率</span><br><span class="line">从 level <span class="number">0</span> 开始，类似抛硬币，每次独立地判断本次概率是否大于p，大于则 level+<span class="number">1</span></span><br></pre></td></tr></table></figure></p>
 <p>令 L(N) = max level，则可以证明 L(N) = $log_{1/p}N$。当 p = 1/2 时，L(N) = $log_2N$。</p>
 <h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><p><img src="http://abandonzhang-blog-pictures.qiniudn.com/SkipList_2.png" alt=""></p>
@@ -405,7 +404,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="http://blog.abandonzhang.me/2018/01/19/SkipList/" title="SkipList 跳表">http://blog.abandonzhang.me/2018/01/19/SkipList/</a>
+    <a href="http://blog.abandonzhang.me/2018/01/19/SkipList/" title="SkipList 入门">http://blog.abandonzhang.me/2018/01/19/SkipList/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>
@@ -433,8 +432,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/12/04/JVM-Args-Recommend/" rel="next" title="JVM 参数">
-                <i class="fa fa-chevron-left"></i> JVM 参数
+              <a href="/2017/12/04/JVM-Args-Summary/" rel="next" title="JVM 参数总结">
+                <i class="fa fa-chevron-left"></i> JVM 参数总结
               </a>
             
           </div>
@@ -442,6 +441,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/02/05/Java-Basic-IO/" rel="prev" title="Java Basic IO">
+                Java Basic IO <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -532,7 +535,7 @@
                 
                 <div class="site-state-item site-state-tags">
                   <a href="/tags/index.html">
-                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-count">11</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

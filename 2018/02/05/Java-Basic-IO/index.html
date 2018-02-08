@@ -97,34 +97,19 @@
 
 
   
-  <meta name="keywords" content="PHP," />
+  <meta name="keywords" content="Java," />
 
 
-<meta name="description" content="使用PhpStorm的好处
-容易发现语法错误（Vim不易发现）
-智能补全，效率++
-一键Rename重构，不需要再grep
-可集成各种工具（sonar、phpcs等）
-断网也能干活">
+<meta name="description" content="未完待续。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="用 PhpStorm 和 SFTP 搭建高效的开发环境">
-<meta property="og:url" content="http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/index.html">
+<meta property="og:title" content="Java Basic IO">
+<meta property="og:url" content="http://blog.abandonzhang.me/2018/02/05/Java-Basic-IO/index.html">
 <meta property="og:site_name" content="蝸牛">
-<meta property="og:description" content="使用PhpStorm的好处
-容易发现语法错误（Vim不易发现）
-智能补全，效率++
-一键Rename重构，不需要再grep
-可集成各种工具（sonar、phpcs等）
-断网也能干活">
-<meta property="og:updated_time" content="2018-01-21T10:14:19.680Z">
+<meta property="og:description" content="未完待续。">
+<meta property="og:updated_time" content="2018-02-08T16:18:05.581Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="用 PhpStorm 和 SFTP 搭建高效的开发环境">
-<meta name="twitter:description" content="使用PhpStorm的好处
-容易发现语法错误（Vim不易发现）
-智能补全，效率++
-一键Rename重构，不需要再grep
-可集成各种工具（sonar、phpcs等）
-断网也能干活">
+<meta name="twitter:title" content="Java Basic IO">
+<meta name="twitter:description" content="未完待续。">
 
 
 
@@ -133,10 +118,10 @@
 
 
 
-  <link rel="canonical" href="http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/"/>
+  <link rel="canonical" href="http://blog.abandonzhang.me/2018/02/05/Java-Basic-IO/"/>
 
 
-  <title>用 PhpStorm 和 SFTP 搭建高效的开发环境 | 蝸牛</title>
+  <title>Java Basic IO | 蝸牛</title>
   
 
 
@@ -280,7 +265,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/">
+    <link itemprop="mainEntityOfPage" href="http://blog.abandonzhang.me/2018/02/05/Java-Basic-IO/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="AbandonZHANG">
@@ -297,7 +282,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">用 PhpStorm 和 SFTP 搭建高效的开发环境</h1>
+          <h1 class="post-title" itemprop="name headline">Java Basic IO</h1>
         
 
         <div class="post-meta">
@@ -309,7 +294,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-02T15:25:15+08:00">Nov 02, 2016</time>
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-05T18:03:07+08:00">Feb 05, 2018</time>
             
 
             
@@ -345,36 +330,7 @@
       
 
       
-        <h2 id="使用PhpStorm的好处"><a href="#使用PhpStorm的好处" class="headerlink" title="使用PhpStorm的好处"></a>使用PhpStorm的好处</h2><ul>
-<li>容易发现语法错误（Vim不易发现）</li>
-<li>智能补全，效率++</li>
-<li>一键Rename重构，不需要再grep</li>
-<li>可集成各种工具（sonar、phpcs等）</li>
-<li>断网也能干活</li>
-</ul>
-<a id="more"></a>
-<h2 id="本地搭建环境的问题"><a href="#本地搭建环境的问题" class="headerlink" title="本地搭建环境的问题"></a>本地搭建环境的问题</h2><ul>
-<li>开发用的电脑是Macbook，公司的php扩展（tair，mcc，rabbitmq）安装不怎么支持，环境搭建困难</li>
-<li>不容易模拟线上机器环境</li>
-<li>本机还要安装Nginx、php-fpm，配置用户等，也挺麻烦</li>
-</ul>
-<h2 id="IDE-本地搭建"><a href="#IDE-本地搭建" class="headerlink" title="IDE != 本地搭建"></a>IDE != 本地搭建</h2><p>通常我们的观念都是用IDE就等于需要本地开发调试，然而……</p>
-<p>PhpStorm的强大之处在于：可以搭建SFTP部署服务器，实时同步本地与远程机器的文件（加强版自动rsync！）</p>
-<p>当然首先我们得在远程机器搭建好SFTP服务（不能是FTP）……</p>
-<h3 id="首先搭好SSH服务"><a href="#首先搭好SSH服务" class="headerlink" title="首先搭好SSH服务"></a>首先搭好SSH服务</h3><p>问题：公司限制本机无法直接ssh到自己的办公云机器</p>
-<p>解决：我们有办公云root权限啊！<br><figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 修改ssh服务的配置文件：</span></span><br><span class="line">vi <span class="meta-keyword">/etc/</span>ssh/sshd_config</span><br><span class="line"></span><br><span class="line"><span class="comment">// 找到端口号设置的地方</span></span><br><span class="line">Port <span class="number">22</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 加一行</span></span><br><span class="line">Port <span class="number">2222</span>   <span class="meta"># 监听新端口</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 然后重启ssh服务即可！</span></span><br><span class="line">sudo service sshd restart</span><br></pre></td></tr></table></figure></p>
-<p>然后本机就可以通过2222端口ssh到远程办公云了！</p>
-<h3 id="搭建FTP服务"><a href="#搭建FTP服务" class="headerlink" title="搭建FTP服务"></a>搭建FTP服务</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">sudo yum -y <span class="keyword">install</span> vsftpd</span><br><span class="line">service vsftpd <span class="keyword">start</span></span><br></pre></td></tr></table></figure>
-<h3 id="PhpStorm设置远程部署"><a href="#PhpStorm设置远程部署" class="headerlink" title="PhpStorm设置远程部署"></a>PhpStorm设置远程部署</h3><p>路径：PhpStorm → Preferences → Build, Execution, Deployment → Deployment</p>
-<p>新建，Type选择SFTP</p>
-<p>Connection里就是些连接配置</p>
-<p>Mappings设置本地目录与server目录的映射（即要把哪个目录的文件同步到办公云的哪个目录）</p>
-<h3 id="开始High"><a href="#开始High" class="headerlink" title="开始High"></a>开始High</h3><p>比较low的模式：每次更改完，想同步的时候，右键项目→ Deployment → Upload To SFTP server</p>
-<p>轻松模式：Tools→ Deployment → 勾选Automatic Upload</p>
-<p>这样每次command+s保存文件的时候就可以自动同步到办公云了！</p>
-<h3 id="IDE支持Phalcon"><a href="#IDE支持Phalcon" class="headerlink" title="IDE支持Phalcon"></a>IDE支持Phalcon</h3><p>IDE不支持Phalcon框架，老是报一堆类、函数未找到也很困扰呀……</p>
-<p>解决：<a href="https://github.com/phalcon/phalcon-devtools" target="_blank" rel="external">https://github.com/phalcon/phalcon-devtools</a></p>
-<p>下载下来，然后在PhpStorm中项目的External Libraries里面右键Configure PHP Include Paths，加上phalcon-devtools的/ide/stubs/Phalcon目录引入即可。</p>
+        <p>未完待续。</p>
 
       
     </div>
@@ -395,7 +351,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/" title="用 PhpStorm 和 SFTP 搭建高效的开发环境">http://blog.abandonzhang.me/2016/11/02/PhpStorm-Sftp/</a>
+    <a href="http://blog.abandonzhang.me/2018/02/05/Java-Basic-IO/" title="Java Basic IO">http://blog.abandonzhang.me/2018/02/05/Java-Basic-IO/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>
@@ -410,7 +366,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/PHP/" rel="tag"># PHP</a>
+            <a href="/tags/Java/" rel="tag"># Java</a>
           
         </div>
       
@@ -423,8 +379,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/10/29/DDD/" rel="next" title="《领域驱动设计》学习笔记">
-                <i class="fa fa-chevron-left"></i> 《领域驱动设计》学习笔记
+              <a href="/2018/01/19/SkipList/" rel="next" title="SkipList 入门">
+                <i class="fa fa-chevron-left"></i> SkipList 入门
               </a>
             
           </div>
@@ -432,10 +388,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/01/28/META-INF-and-WEB-INF/" rel="prev" title="META-INF 和 WEB-INF">
-                META-INF 和 WEB-INF <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -484,17 +436,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview-wrap sidebar-panel">
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -526,7 +469,7 @@
                 
                 <div class="site-state-item site-state-tags">
                   <a href="/tags/index.html">
-                    <span class="site-state-item-count">12</span>
+                    <span class="site-state-item-count">11</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -556,22 +499,6 @@
         </div>
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#使用PhpStorm的好处"><span class="nav-number">1.</span> <span class="nav-text">使用PhpStorm的好处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#本地搭建环境的问题"><span class="nav-number">2.</span> <span class="nav-text">本地搭建环境的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IDE-本地搭建"><span class="nav-number">3.</span> <span class="nav-text">IDE != 本地搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#首先搭好SSH服务"><span class="nav-number">3.1.</span> <span class="nav-text">首先搭好SSH服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#搭建FTP服务"><span class="nav-number">3.2.</span> <span class="nav-text">搭建FTP服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PhpStorm设置远程部署"><span class="nav-number">3.3.</span> <span class="nav-text">PhpStorm设置远程部署</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#开始High"><span class="nav-number">3.4.</span> <span class="nav-text">开始High</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IDE支持Phalcon"><span class="nav-number">3.5.</span> <span class="nav-text">IDE支持Phalcon</span></a></li></ol></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       
